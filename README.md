@@ -60,3 +60,10 @@ Track quest progress and completion, just select a quest or miniquest from the d
 #### Item tasks
 
 Select an item using the search button and searching via the in-game chatbox, then set the desired quantity. The plugin will keep track of your items and tally up quantities stored in different inventories (bank, player, GIMP storage), and will be automatically completed once you get that amount of the item.
+
+## Changelog
+
+### Recent Additions
+- Added manual completion toggling for tasks created from presets, allowing users to right-click and mark them complete/incomplete just like quick-added tasks.
+- Added customizable color setting for task completion messages shown in the chatbox.
+- Implemented automatic goal status checking upon login to mark goals as completed if requirements are already met.
