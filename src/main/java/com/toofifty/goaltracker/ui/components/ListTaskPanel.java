@@ -1,12 +1,17 @@
 package com.toofifty.goaltracker.ui.components;
 
+import com.toofifty.goaltracker.ui.TaskItemContent;
+
 import com.toofifty.goaltracker.utils.ReorderableList;
 import com.toofifty.goaltracker.models.task.Task;
+import com.toofifty.goaltracker.models.enums.Status;
 import java.util.function.Consumer;
 import javax.swing.JMenuItem;
 
 public class ListTaskPanel extends ListItemPanel<Task>
 {
+    private TaskItemContent taskContent;
+
     private final JMenuItem indentItem = new JMenuItem("Indent");
     private final JMenuItem unindentItem = new JMenuItem("Unindent");
 
@@ -70,7 +75,7 @@ public class ListTaskPanel extends ListItemPanel<Task>
         }
 
         var previousItem = list.getPreviousItem(item);
-        
+
         if (item.isNotFullyIndented() && previousItem != null && previousItem.getIndentLevel() >= item.getIndentLevel()) {
             popupMenu.add(indentItem);
         }
@@ -78,6 +83,16 @@ public class ListTaskPanel extends ListItemPanel<Task>
         if (item.isIndented()) {
             popupMenu.add(unindentItem);
         }
+
+        String toggleLabel = "Mark as " + (item.getStatus() == Status.COMPLETED ? "Incomplete" : "Completed");
+        JMenuItem toggleStatusItem = new JMenuItem(toggleLabel);
+        toggleStatusItem.addActionListener(e -> {
+            item.setStatus(item.getStatus() == Status.COMPLETED ? Status.NOT_STARTED : Status.COMPLETED);
+            if (taskContent != null) {
+                taskContent.refresh();
+            }
+        });
+        popupMenu.add(toggleStatusItem);
 
         popupMenu.add(removeItem);
     }
@@ -88,5 +103,9 @@ public class ListTaskPanel extends ListItemPanel<Task>
 
     public void onUnindented(Consumer<Task> unindentedListener) {
         this.unindentedListener = unindentedListener;
+    }
+
+    public void setTaskContent(TaskItemContent taskContent) {
+        this.taskContent = taskContent;
     }
 }

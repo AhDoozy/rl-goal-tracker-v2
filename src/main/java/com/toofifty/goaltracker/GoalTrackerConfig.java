@@ -1,8 +1,11 @@
 package com.toofifty.goaltracker;
 
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.ConfigGroup;
+import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Config;
+import net.runelite.client.config.Alpha;
+import java.awt.Color;
 
 @ConfigGroup("goaltracker")
 public interface GoalTrackerConfig extends Config
@@ -33,4 +36,15 @@ public interface GoalTrackerConfig extends Config
 
     @ConfigItem(keyName = "goalTrackerItemNoteMapCache", name = "", description = "", hidden = true)
     void goalTrackerItemNoteMapCache(String str);
+
+    @ConfigItem(
+        keyName = "completionMessageColor",
+        name = "Completion Message Color",
+        description = "Color of the chat message when a goal is completed"
+    )
+    @Alpha
+    default Color completionMessageColor()
+    {
+        return new Color(0xFF16ABE5, true);
+    }
 }

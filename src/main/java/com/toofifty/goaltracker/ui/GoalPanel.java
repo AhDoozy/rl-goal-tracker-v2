@@ -3,6 +3,7 @@ package com.toofifty.goaltracker.ui;
 import com.toofifty.goaltracker.GoalTrackerPlugin;
 import com.toofifty.goaltracker.models.Goal;
 import com.toofifty.goaltracker.models.enums.TaskType;
+import com.toofifty.goaltracker.models.enums.Status;
 import com.toofifty.goaltracker.models.task.ManualTask;
 import com.toofifty.goaltracker.models.task.Task;
 import com.toofifty.goaltracker.ui.components.EditableInput;
@@ -51,23 +52,11 @@ public class GoalPanel extends JPanel implements Refreshable
 
         taskListPanel = new ListPanel<>(goal.getTasks(), (task) -> {
             ListTaskPanel taskPanel = new ListTaskPanel(goal.getTasks(), task);
-            taskPanel.add(new TaskItemContent(plugin, task));
+            TaskItemContent taskContent = new TaskItemContent(plugin, task);
+            taskPanel.add(taskContent);
+            taskPanel.setTaskContent(taskContent);
             taskPanel.setBorder(new EmptyBorder(2, 4, 2, 4));
 
-            if (TaskType.MANUAL.equals(task.getType())) {
-                ManualTask manualTask = (ManualTask) task;
-
-                taskPanel.onClick(e -> {
-                    manualTask.toggle();
-
-                    if (task.getStatus().isCompleted()) {
-                        plugin.notifyTask(task);
-                    }
-
-                    plugin.getUiStatusManager().refresh(task);
-                    this.taskUpdatedListener.accept(manualTask);
-                });
-            }
 
             taskPanel.onIndented(e -> {
                 this.goalUpdatedListener.accept(goal);

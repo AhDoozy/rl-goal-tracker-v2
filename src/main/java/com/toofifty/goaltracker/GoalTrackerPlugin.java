@@ -184,7 +184,7 @@ public class GoalTrackerPlugin extends Plugin
         log.debug("Notify: [Goal Tracker] You have completed a task: " + task + "!");
 
         String message = "[Goal Tracker] You have completed a task: " + task + "!";
-        String formattedMessage = new ChatMessageBuilder().append(ColorScheme.PROGRESS_COMPLETE_COLOR, message).build();
+        String formattedMessage = new ChatMessageBuilder().append(config.completionMessageColor(), message).build();
         chatMessageManager.queue(QueuedMessage.builder()
             .type(ChatMessageType.CONSOLE)
             .name("Goal Tracker")
@@ -220,6 +220,20 @@ public class GoalTrackerPlugin extends Plugin
         // onGameStateChanged reports incorrect quest statuses,
         // so this need to be done in this subscriber
         goalTrackerPanel.refresh();
+
+        goalManager.getGoals().stream()
+            .flatMap(goal -> goal.getTasks().stream())
+            .filter(task -> !task.getStatus().isCompleted())
+            .forEach(task -> {
+                if (taskUpdateService.update(task)) {
+                    if (task.getStatus().isCompleted()) {
+                        notifyTask(task);
+                    }
+                    uiStatusManager.refresh(task);
+                }
+            });
+
+        goalManager.save();
     }
 
     @Subscribe
