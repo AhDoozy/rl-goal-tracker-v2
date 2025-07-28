@@ -147,6 +147,7 @@ public class GoalTrackerPlugin extends Plugin
     public void onSessionOpen(SessionOpen event)
     {
         goalManager.load();
+        goalTrackerPanel.refresh();
     }
 
     @Subscribe
@@ -233,7 +234,19 @@ public class GoalTrackerPlugin extends Plugin
                 }
             });
 
+        List<QuestTask> questTasks = goalManager.getIncompleteTasksByType(TaskType.QUEST);
+        for (QuestTask task : questTasks) {
+            if (!taskUpdateService.update(task)) continue;
+
+            if (task.getStatus().isCompleted()) {
+                notifyTask(task);
+            }
+
+            uiStatusManager.refresh(task);
+        }
+
         goalManager.save();
+        goalTrackerPanel.refresh();
     }
 
     @Subscribe
@@ -252,6 +265,7 @@ public class GoalTrackerPlugin extends Plugin
             uiStatusManager.refresh(task);
             this.goalManager.save();
         }
+        goalTrackerPanel.refresh();
     }
 
     @Subscribe

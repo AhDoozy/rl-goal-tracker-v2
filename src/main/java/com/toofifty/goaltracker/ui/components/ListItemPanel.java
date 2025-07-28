@@ -2,6 +2,7 @@ package com.toofifty.goaltracker.ui.components;
 
 import com.toofifty.goaltracker.utils.ReorderableList;
 import com.toofifty.goaltracker.ui.Refreshable;
+import com.toofifty.goaltracker.models.Goal;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -105,6 +106,27 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
             popupMenu.add(moveToBottom);
         }
         popupMenu.add(removeItem);
+
+        if (item instanceof Goal) {
+            JMenuItem markAllComplete = new JMenuItem("Mark all as completed");
+            JMenuItem markAllIncomplete = new JMenuItem("Mark all as incomplete");
+
+            markAllComplete.addActionListener(e -> {
+                Goal goal = (Goal) item;
+                goal.setAllTasksCompleted(true);
+                refresh();
+            });
+
+            markAllIncomplete.addActionListener(e -> {
+                Goal goal = (Goal) item;
+                goal.setAllTasksCompleted(false);
+                refresh();
+            });
+
+            popupMenu.addSeparator();
+            popupMenu.add(markAllComplete);
+            popupMenu.add(markAllIncomplete);
+        }
     }
 
     public ListItemPanel<T> add(Component comp)

@@ -57,4 +57,10 @@ public class Goal
 
         return Status.NOT_STARTED;
     }
+
+    public void setAllTasksCompleted(boolean completed) {
+        for (Task task : tasks) {
+            task.setStatus(completed ? Status.COMPLETED : Status.NOT_STARTED);
+        }
+    }
 }

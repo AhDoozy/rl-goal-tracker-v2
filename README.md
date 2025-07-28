@@ -64,6 +64,8 @@ Select an item using the search button and searching via the in-game chatbox, th
 ## Changelog
 
 ### Recent Additions
+- Added right-click menu to parent goals to mark all child tasks as completed or incomplete.
+- Fixed visual refresh issue where quest task statuses didn’t show correctly on login unless re-entering the goal.
 - Added manual completion toggling for tasks created from presets, allowing users to right-click and mark them complete/incomplete just like quick-added tasks.
 - Added customizable color setting for task completion messages shown in the chatbox.
 - Implemented automatic goal status checking upon login to mark goals as completed if requirements are already met.
