@@ -61,6 +61,9 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         title.setText("Goal Tracker");
         title.setForeground(Color.WHITE);
         title.setFont(FontManager.getRunescapeBoldFont());
+        TextButton profileButton = new TextButton("< Profiles", ColorScheme.PROGRESS_ERROR_COLOR);
+        profileButton.onClick(e -> plugin.showProfileSelector());
+        titlePanel.add(profileButton, BorderLayout.CENTER);
         titlePanel.add(title, BorderLayout.WEST);
 
         goalListPanel = new ListPanel<>(goalManager.getGoals(),
@@ -152,5 +155,12 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         if (this.goalPanel != null) {
             this.goalPanel.onTaskAdded(this.taskAddedListener);
         }
+    }
+
+    public void setGoals(java.util.List<Goal> goals)
+    {
+        goalListPanel.setItems(goals);
+        goalListPanel.tryBuildList();
+        goalListPanel.refresh();
     }
 }

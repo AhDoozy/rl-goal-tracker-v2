@@ -1,5 +1,8 @@
 package com.toofifty.goaltracker;
 
+import com.toofifty.goaltracker.ui.MainPanel;
+import com.toofifty.goaltracker.ui.ProfileManager.ProfileManager;
+
 import com.google.inject.Provides;
 import com.toofifty.goaltracker.models.enums.TaskType;
 import com.toofifty.goaltracker.models.task.*;
@@ -107,7 +110,9 @@ public class GoalTrackerPlugin extends Plugin
     {
         goalManager.load();
         itemCache.load();
-        goalTrackerPanel.home();
+        ProfileManager.getInstance().load();
+
+        MainPanel mainPanel = new MainPanel(this);
 
         final AsyncBufferedImage icon = itemManager.getImage(ItemID.TODO_LIST);
 
@@ -116,7 +121,7 @@ public class GoalTrackerPlugin extends Plugin
                 .tooltip("Goal Tracker")
                 .icon(icon)
                 .priority(7)
-                .panel(goalTrackerPanel)
+                .panel(mainPanel)
                 .build();
 
             clientToolbar.addNavigation(uiNavigationButton);
@@ -294,5 +299,18 @@ public class GoalTrackerPlugin extends Plugin
     GoalTrackerConfig getGoalTrackerConfig(ConfigManager configManager)
     {
         return configManager.getConfig(GoalTrackerConfig.class);
+    }
+    public void showProfileSelector()
+    {
+        ProfileManager.getInstance().load();
+        MainPanel profilePanel = new MainPanel(this);
+        clientToolbar.removeNavigation(uiNavigationButton);
+        uiNavigationButton = NavigationButton.builder()
+            .tooltip("Goal Tracker")
+            .icon(itemManager.getImage(ItemID.TODO_LIST))
+            .priority(7)
+            .panel(profilePanel)
+            .build();
+        clientToolbar.addNavigation(uiNavigationButton);
     }
 }

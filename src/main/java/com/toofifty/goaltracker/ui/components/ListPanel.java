@@ -67,6 +67,14 @@ public class ListPanel<T> extends JScrollPane implements Refreshable
         tryBuildList();
     }
 
+    public void setItems(List<T> items)
+    {
+        this.itemPanelMap.clear();
+        this.reorderableList.clear();
+        this.reorderableList.addAll(items);
+        tryBuildList();
+    }
+
     private List<ListItemPanel<T>> buildItemPanels()
     {
         return reorderableList
