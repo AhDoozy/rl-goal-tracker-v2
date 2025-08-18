@@ -36,14 +36,15 @@ public class TaskItemContent extends JPanel implements Refreshable
         add(titleLabel, BorderLayout.CENTER);
 
         if (task instanceof QuestTask) {
-            prereqButton.setMargin(new Insets(2, 4, 2, 4));
+            prereqButton.setMargin(new Insets(1, 3, 1, 3));
+            prereqButton.setFont(prereqButton.getFont().deriveFont(prereqButton.getFont().getSize2D() * 0.75f));
             prereqButton.setFocusable(false);
             prereqButton.addActionListener(e -> {
                 QuestTask qt = (QuestTask) task;
                 List<Task> reqs = QuestRequirements.getRequirements(qt.getQuest(), qt.getIndentLevel());
-                for (Task req : reqs) {
-                    goal.getTasks().add(req);
-                }
+                // Insert directly after this item
+                int insertAt = Math.max(0, goal.getTasks().indexOf(task) + 1);
+                goal.getTasks().addAll(insertAt, reqs);
                 Container parent = SwingUtilities.getAncestorOfClass(ListPanel.class, TaskItemContent.this);
                 if (parent instanceof ListPanel) {
                     ((ListPanel<?>) parent).tryBuildList();
