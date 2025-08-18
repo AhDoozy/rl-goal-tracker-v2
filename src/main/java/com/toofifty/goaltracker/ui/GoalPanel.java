@@ -52,7 +52,7 @@ public class GoalPanel extends JPanel implements Refreshable
 
         taskListPanel = new ListPanel<>(goal.getTasks(), (task) -> {
             ListTaskPanel taskPanel = new ListTaskPanel(goal.getTasks(), task);
-            TaskItemContent taskContent = new TaskItemContent(plugin, task);
+            TaskItemContent taskContent = new TaskItemContent(plugin, goal, task);
             taskPanel.add(taskContent);
             taskPanel.setTaskContent(taskContent);
             taskContent.refresh();
@@ -93,6 +93,15 @@ public class GoalPanel extends JPanel implements Refreshable
 
         if (Objects.nonNull(this.taskAddedListener)) this.taskAddedListener.accept(task);
         if (Objects.nonNull(this.taskUpdatedListener)) this.taskUpdatedListener.accept(task);
+    }
+
+    public void refreshTaskList()
+    {
+        taskListPanel.tryBuildList();
+        taskListPanel.refresh();
+        plugin.getUiStatusManager().refresh(goal);
+        revalidate();
+        repaint();
     }
 
     @Override

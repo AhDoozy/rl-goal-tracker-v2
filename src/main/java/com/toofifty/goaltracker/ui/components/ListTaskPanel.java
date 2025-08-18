@@ -10,6 +10,8 @@ import javax.swing.JMenuItem;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Component;
+import javax.swing.SwingUtilities;
+import java.awt.Container;
 
 public class ListTaskPanel extends ListItemPanel<Task>
 {
@@ -40,6 +42,7 @@ public class ListTaskPanel extends ListItemPanel<Task>
 
             item.indent();
             this.indentedListener.accept(item);
+            refreshParentList();
         });
 
         unindentItem.addActionListener(e -> {
@@ -57,6 +60,7 @@ public class ListTaskPanel extends ListItemPanel<Task>
 
             item.unindent();
             this.unindentedListener.accept(item);
+            refreshParentList();
         });
         // Allow shift-click to remove this item and all its indented children
         addMouseListener(new MouseAdapter() {
@@ -71,6 +75,7 @@ public class ListTaskPanel extends ListItemPanel<Task>
                     }
                     // Remove the item itself
                     removeItem.doClick();
+                    refreshParentList();
                 }
             }
         });
@@ -86,6 +91,7 @@ public class ListTaskPanel extends ListItemPanel<Task>
                             list.remove(list.get(index + 1));
                         }
                         removeItem.doClick();
+                        refreshParentList();
                     }
                 }
             });
@@ -122,10 +128,25 @@ public class ListTaskPanel extends ListItemPanel<Task>
         String toggleLabel = "Mark as " + (item.getStatus() == Status.COMPLETED ? "Incomplete" : "Completed");
         JMenuItem toggleStatusItem = new JMenuItem(toggleLabel);
         toggleStatusItem.addActionListener(e -> {
-            item.setStatus(item.getStatus() == Status.COMPLETED ? Status.NOT_STARTED : Status.COMPLETED);
+            Status newStatus = (item.getStatus() == Status.COMPLETED ? Status.NOT_STARTED : Status.COMPLETED);
+            item.setStatus(newStatus);
+
+            // Cascade status change to all indented children
+            int index = list.indexOf(item);
+            int baseIndent = item.getIndentLevel();
+            for (int i = index + 1; i < list.size(); i++) {
+                Task child = list.get(i);
+                if (child.getIndentLevel() <= baseIndent) {
+                    break; // stop at siblings or parents
+                }
+                child.setStatus(newStatus);
+            }
+
             if (taskContent != null) {
                 taskContent.refresh();
             }
+            // Refresh the entire list panel so UI updates immediately
+            refreshParentList();
         });
         popupMenu.add(toggleStatusItem);
 
@@ -142,5 +163,18 @@ public class ListTaskPanel extends ListItemPanel<Task>
 
     public void setTaskContent(TaskItemContent taskContent) {
         this.taskContent = taskContent;
+    }
+
+    private void refreshParentList()
+    {
+        Container parent = SwingUtilities.getAncestorOfClass(ListPanel.class, this);
+        if (parent instanceof ListPanel) {
+            ((ListPanel<?>) parent).tryBuildList();
+            ((ListPanel<?>) parent).refresh();
+        } else {
+            // Fallback
+            revalidate();
+            repaint();
+        }
     }
 }
