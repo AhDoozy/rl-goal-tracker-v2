@@ -13,9 +13,9 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.ListCellRenderer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.ListCellRenderer;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
@@ -46,6 +46,18 @@ public class ComboBox<T> extends JComboBox<T>
     {
         this.formatter = formatter;
         setRenderer(new ComboBoxListRenderer<>(formatter));
+    }
+
+    @SuppressWarnings("unchecked")
+    public void setItems(List<T> items)
+    {
+        removeAllItems();
+        for (T item : items) {
+            addItem(item);
+        }
+        if (getItemCount() > 0) {
+            setSelectedIndex(0);
+        }
     }
 }
 

@@ -7,6 +7,8 @@ import com.toofifty.goaltracker.models.task.Task;
 import com.toofifty.goaltracker.models.enums.Status;
 import java.util.function.Consumer;
 import javax.swing.JMenuItem;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class ListTaskPanel extends ListItemPanel<Task>
 {
@@ -54,6 +56,15 @@ public class ListTaskPanel extends ListItemPanel<Task>
 
             item.unindent();
             this.unindentedListener.accept(item);
+        });
+        // Allow shift-click to remove this item
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.isShiftDown() && e.getButton() == MouseEvent.BUTTON1) {
+                    removeItem.doClick();
+                }
+            }
         });
     }
 

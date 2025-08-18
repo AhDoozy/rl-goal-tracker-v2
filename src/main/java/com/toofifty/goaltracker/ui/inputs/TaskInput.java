@@ -7,23 +7,24 @@ import com.toofifty.goaltracker.ui.components.TextButton;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.util.function.Consumer;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
+import java.util.function.Consumer;
+import java.util.Collection;
 
-public abstract class TaskInput<T extends Task> extends JPanel
+public abstract class TaskInput extends JPanel
 {
     protected final int PREFERRED_INPUT_HEIGHT = 16;
-    protected GoalTrackerPlugin plugin;
+    protected final GoalTrackerPlugin plugin;
     private final Goal goal;
     @Getter
     private final JPanel inputRow;
     @Getter
-    private Consumer<T> listener;
+    private Consumer<Task> listener;
 
     TaskInput(GoalTrackerPlugin plugin, Goal goal, String title)
     {
@@ -63,16 +64,29 @@ public abstract class TaskInput<T extends Task> extends JPanel
 
     abstract protected void submit();
 
-    public void addTask(T task)
+    public void addTask(Task task)
     {
         goal.getTasks().add(task);
-        this.listener.accept(task);
+        if (listener != null) {
+            listener.accept(task);
+        }
+        this.reset();
+    }
+
+    public void addTasks(Collection<Task> tasks)
+    {
+        goal.getTasks().addAll(tasks);
+        if (listener != null) {
+            for (Task t : tasks) {
+                listener.accept(t);
+            }
+        }
         this.reset();
     }
 
     abstract protected void reset();
 
-    public TaskInput<T> onSubmit(Consumer<T> listener)
+    public TaskInput onSubmit(Consumer<Task> listener)
     {
         this.listener = listener;
         return this;

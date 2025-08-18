@@ -17,7 +17,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.regex.Pattern;
 
-public class ItemTaskInput extends TaskInput<ItemTask>
+public class ItemTaskInput extends TaskInput
 {
     private final ItemManager itemManager;
     private final ClientThread clientThread;
@@ -122,7 +122,7 @@ public class ItemTaskInput extends TaskInput<ItemTask>
             .itemId(selectedItem.getId())
             .itemName(selectedItem.getName())
             .quantity(Integer.parseInt(quantityField.getText()))
-        .build());
+            .build());
     }
 
     @Override

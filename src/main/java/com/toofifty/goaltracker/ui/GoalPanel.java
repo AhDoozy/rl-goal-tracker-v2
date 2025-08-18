@@ -55,6 +55,7 @@ public class GoalPanel extends JPanel implements Refreshable
             TaskItemContent taskContent = new TaskItemContent(plugin, task);
             taskPanel.add(taskContent);
             taskPanel.setTaskContent(taskContent);
+            taskContent.refresh();
             taskPanel.setBorder(new EmptyBorder(2, 4, 2, 4));
 
 
@@ -86,6 +87,9 @@ public class GoalPanel extends JPanel implements Refreshable
         taskListPanel.tryBuildList();
         taskListPanel.refresh();
         plugin.setValidateAll(true);
+        plugin.getUiStatusManager().refresh(goal);
+        revalidate();
+        repaint();
 
         if (Objects.nonNull(this.taskAddedListener)) this.taskAddedListener.accept(task);
         if (Objects.nonNull(this.taskUpdatedListener)) this.taskUpdatedListener.accept(task);
