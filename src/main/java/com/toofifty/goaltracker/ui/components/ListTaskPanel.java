@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 import javax.swing.JMenuItem;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.Component;
 
 public class ListTaskPanel extends ListItemPanel<Task>
 {
@@ -57,15 +58,38 @@ public class ListTaskPanel extends ListItemPanel<Task>
             item.unindent();
             this.unindentedListener.accept(item);
         });
-        // Allow shift-click to remove this item
+        // Allow shift-click to remove this item and all its indented children
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.isShiftDown() && e.getButton() == MouseEvent.BUTTON1) {
+                    int index = list.indexOf(item);
+                    int baseIndent = item.getIndentLevel();
+                    // Remove all children that are more indented than this item
+                    while (index + 1 < list.size() && list.get(index + 1).getIndentLevel() > baseIndent) {
+                        list.remove(list.get(index + 1));
+                    }
+                    // Remove the item itself
                     removeItem.doClick();
                 }
             }
         });
+        // Also apply the same shift-click removal listener to all child components
+        for (Component child : getComponents()) {
+            child.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.isShiftDown() && e.getButton() == MouseEvent.BUTTON1) {
+                        int index = list.indexOf(item);
+                        int baseIndent = item.getIndentLevel();
+                        while (index + 1 < list.size() && list.get(index + 1).getIndentLevel() > baseIndent) {
+                            list.remove(list.get(index + 1));
+                        }
+                        removeItem.doClick();
+                    }
+                }
+            });
+        }
     }
 
     @Override
