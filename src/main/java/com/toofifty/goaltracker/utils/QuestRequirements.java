@@ -51,6 +51,58 @@ public class QuestRequirements
             Quest.THE_RESTLESS_GHOST,
             Collections.emptyList() // No requirements
         );
+        REQUIREMENT_MAP.put(
+            Quest.DRAGON_SLAYER_I,
+            Arrays.asList(
+                SkillLevelTask.builder().skill(Skill.ATTACK).level(32).build(),
+                QuestTask.builder().quest(Quest.PRIEST_IN_PERIL).build()
+            )
+        );
+        REQUIREMENT_MAP.put(
+            Quest.COOKS_ASSISTANT,
+            Collections.emptyList() // No requirements
+        );
+        REQUIREMENT_MAP.put(
+            Quest.DEMON_SLAYER,
+            Collections.emptyList() // No requirements
+        );
+        REQUIREMENT_MAP.put(
+            Quest.HEROES_QUEST,
+            Arrays.asList(
+                QuestTask.builder().quest(Quest.DRAGON_SLAYER_I).build(),
+                QuestTask.builder().quest(Quest.LOST_CITY).build(),
+                QuestTask.builder().quest(Quest.PRIEST_IN_PERIL).build(),
+                SkillLevelTask.builder().skill(Skill.CRAFTING).level(48).build(),
+                SkillLevelTask.builder().skill(Skill.HERBLORE).level(53).build(),
+                SkillLevelTask.builder().skill(Skill.SLAYER).level(55).build()
+            )
+        );
+        REQUIREMENT_MAP.put(
+            Quest.MONKS_FRIEND,
+            Collections.emptyList() // No requirements
+        );
+        REQUIREMENT_MAP.put(
+            Quest.THE_GRAND_TREE,
+            Arrays.asList(
+                QuestTask.builder().quest(Quest.TREE_GNOME_VILLAGE).build(),
+                SkillLevelTask.builder().skill(Skill.AGILITY).level(25).build(),
+                SkillLevelTask.builder().skill(Skill.RANGED).level(25).build()
+            )
+        );
+        REQUIREMENT_MAP.put(
+            Quest.TREE_GNOME_VILLAGE,
+            Arrays.asList(
+                SkillLevelTask.builder().skill(Skill.AGILITY).level(8).build()
+            )
+        );
+        REQUIREMENT_MAP.put(
+            Quest.SHIELD_OF_ARRAV,
+            Collections.emptyList() // No requirements
+        );
+        REQUIREMENT_MAP.put(
+            Quest.FIGHT_ARENA,
+            Collections.emptyList() // No requirements
+        );
     }
 
     /**
