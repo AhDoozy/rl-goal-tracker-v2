@@ -186,25 +186,6 @@ public class QuestRequirements
                 )
         );
 
-        // Lunar Diplomacy requires The Fremennik Trials, Lost City, Rune Mysteries and Shilo Village.
-        // It also requires multiple skills: Herblore 5, Crafting 61, Defence 40, Firemaking 49, Magic 65, Mining 60 and Woodcutting 55【209799958490204†L50-L67】.
-        REQUIREMENT_MAP.put(
-                Quest.LUNAR_DIPLOMACY,
-                Arrays.asList(
-                        QuestTask.builder().quest(Quest.THE_FREMENNIK_TRIALS).build(),
-                        QuestTask.builder().quest(Quest.LOST_CITY).build(),
-                        QuestTask.builder().quest(Quest.RUNE_MYSTERIES).build(),
-                        QuestTask.builder().quest(Quest.SHILO_VILLAGE).build(),
-                        SkillLevelTask.builder().skill(Skill.HERBLORE).level(5).build(),
-                        SkillLevelTask.builder().skill(Skill.CRAFTING).level(61).build(),
-                        SkillLevelTask.builder().skill(Skill.DEFENCE).level(40).build(),
-                        SkillLevelTask.builder().skill(Skill.FIREMAKING).level(49).build(),
-                        SkillLevelTask.builder().skill(Skill.MAGIC).level(65).build(),
-                        SkillLevelTask.builder().skill(Skill.MINING).level(60).build(),
-                        SkillLevelTask.builder().skill(Skill.WOODCUTTING).level(55).build()
-                )
-        );
-
         // Eadgar's Ruse requires Druidic Ritual and Troll Stronghold, with Herblore 31【282840601330941†L49-L56】.
         REQUIREMENT_MAP.put(
                 Quest.EADGARS_RUSE,
@@ -384,13 +365,6 @@ public class QuestRequirements
 
         REQUIREMENT_MAP.put(
                 Quest.IMP_CATCHER,
-                Arrays.asList(
-
-                )
-        );
-
-        REQUIREMENT_MAP.put(
-                Quest.JUNGLE_POTION,
                 Arrays.asList(
 
                 )
