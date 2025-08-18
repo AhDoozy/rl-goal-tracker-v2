@@ -1321,8 +1321,7 @@ public class QuestRequirements
                 Quest.MONKEY_MADNESS_I,
                 Arrays.asList(
                         QuestTask.builder().quest(Quest.THE_GRAND_TREE).build(),
-                        QuestTask.builder().quest(Quest.TREE_GNOME_VILLAGE).build(),
-                        SkillLevelTask.builder().skill(Skill.AGILITY).level(0).build()
+                        QuestTask.builder().quest(Quest.TREE_GNOME_VILLAGE).build()
                 )
         );
 
@@ -1331,8 +1330,7 @@ public class QuestRequirements
                 Arrays.asList(
                         QuestTask.builder().quest(Quest.ROVING_ELVES).build(),
                         SkillLevelTask.builder().skill(Skill.AGILITY).level(60).build(),
-                        SkillLevelTask.builder().skill(Skill.THIEVING).level(50).build(),
-                        SkillLevelTask.builder().skill(Skill.SLAYER).level(0).build()
+                        SkillLevelTask.builder().skill(Skill.THIEVING).level(50).build()
                 )
         );
 
@@ -1397,8 +1395,7 @@ public class QuestRequirements
                         SkillLevelTask.builder().skill(Skill.SMITHING).level(68).build(),
                         SkillLevelTask.builder().skill(Skill.HUNTER).level(60).build(),
                         SkillLevelTask.builder().skill(Skill.THIEVING).level(60).build(),
-                        SkillLevelTask.builder().skill(Skill.MAGIC).level(75).build(),
-                        SkillLevelTask.builder().skill(Skill.HITPOINTS).level(0).build()
+                        SkillLevelTask.builder().skill(Skill.MAGIC).level(75).build()
                 )
         );
 
@@ -1412,8 +1409,7 @@ public class QuestRequirements
                         SkillLevelTask.builder().skill(Skill.HUNTER).level(60).build(),
                         SkillLevelTask.builder().skill(Skill.THIEVING).level(55).build(),
                         SkillLevelTask.builder().skill(Skill.AGILITY).level(70).build(),
-                        SkillLevelTask.builder().skill(Skill.CRAFTING).level(70).build(),
-                        SkillLevelTask.builder().skill(Skill.FLETCHING).level(0).build()
+                        SkillLevelTask.builder().skill(Skill.CRAFTING).level(70).build()
                 )
         );
 
