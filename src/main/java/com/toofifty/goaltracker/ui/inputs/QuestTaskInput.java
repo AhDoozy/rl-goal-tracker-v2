@@ -5,6 +5,7 @@ import com.toofifty.goaltracker.models.Goal;
 import com.toofifty.goaltracker.models.task.QuestTask;
 import com.toofifty.goaltracker.models.task.Task;
 import com.toofifty.goaltracker.utils.QuestRequirements;
+import com.toofifty.goaltracker.ui.components.ComboBox;
 import net.runelite.api.Quest;
 import net.runelite.client.ui.ColorScheme;
 
@@ -22,7 +23,7 @@ public class QuestTaskInput extends TaskInput
 {
     private final List<Quest> allQuests;
     private Quest bestMatch;
-    private final JComboBox<Quest> questDropdown;
+    private final ComboBox<Quest> questDropdown;
 
     public QuestTaskInput(GoalTrackerPlugin plugin, Goal goal)
     {
@@ -32,19 +33,17 @@ public class QuestTaskInput extends TaskInput
         allQuests = Arrays.asList(Quest.values());
         allQuests.sort(Comparator.comparing(Quest::getName));
 
-        // Initialize dropdown with all quests and custom renderer
-        questDropdown = new JComboBox<>(allQuests.toArray(new Quest[0]));
-        questDropdown.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value instanceof Quest) {
-                    String name = ((Quest) value).getName();
-                    setText(name);
-                }
-                return this;
-            }
-        });
+        // Initialize dropdown via shared ComboBox for consistent arrows and crisp fonts
+        questDropdown = new ComboBox<>(allQuests);
+        // questDropdown.setCompact(true); // ~10% smaller font
+        questDropdown.setFormatter(q -> q != null ? q.getName() : "");
+
+        // Force RuneScape UF font at normal size
+        Font rsFont = new Font("RuneScape UF", Font.PLAIN, 10);
+        questDropdown.setFont(rsFont);
+
+
+
         questDropdown.setSelectedIndex(-1); // no selection initially
         questDropdown.addActionListener(e -> {
             Quest selected = (Quest) questDropdown.getSelectedItem();

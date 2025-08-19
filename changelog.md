@@ -25,3 +25,6 @@
 - Removed in-panel close button; close control is now handled directly via the Search button toggle.
 - Green **+Add** button hidden for item search inputs (still visible for other input types).
 - Duplicate prerequisites can no longer be added multiple times to the same quest.
+- Quest dropdown now uses **RuneScape UF** font at a normal crisp size for improved readability.
+- ComboBox font scaling updated to use integer point sizes, preventing fuzzy text.
+- QuestTaskInput updated to rely on shared ComboBox styling for consistency.

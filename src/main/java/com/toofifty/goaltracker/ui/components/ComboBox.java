@@ -3,9 +3,12 @@ package com.toofifty.goaltracker.ui.components;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.util.List;
 import java.util.function.Function;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -13,6 +16,8 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 
 import net.runelite.client.ui.ColorScheme;
@@ -22,10 +27,19 @@ import net.runelite.client.util.Text;
  * Simple generic ComboBox with optional formatter and a renderer
  * that matches RuneLite dark styling. Includes a helper to keep the
  * popup open after a selection (for rapid multi-add flows).
+ *
+ * This version also supports:
+ *  - Custom up/down arrow icons loaded from resources (combo_arrow_down.png / combo_arrow_up.png)
+ *  - Compact mode (~10% smaller font), or arbitrary font scaling via setFontScale
  */
 public class ComboBox<T> extends JComboBox<T>
 {
     private Function<T, String> formatter = null;
+
+    private double fontScale = 1.0; // 1.0 = default; 0.9 = compact
+    private ImageIcon arrowDownIcon;
+    private ImageIcon arrowUpIcon;
+    private JButton arrowButtonRef; // created by UI#createArrowButton
 
     public ComboBox()
     {
@@ -34,19 +48,103 @@ public class ComboBox<T> extends JComboBox<T>
         // Keep consistent look with RuneLite
         setBackground(ColorScheme.DARKER_GRAY_COLOR);
         setForeground(Color.WHITE);
-        setUI(new BasicComboBoxUI());
+
+        // Load arrow icons from resources if available
+        // (If null, we just fall back to no icon customization)
+        arrowDownIcon = loadIcon("/combo_arrow_down.png");
+        arrowUpIcon = loadIcon("/combo_arrow_up.png");
+
+        // Install a BasicComboBoxUI that uses our custom arrow button (if icons are available)
+        setUI(new BasicComboBoxUI()
+        {
+            @Override
+            protected JButton createArrowButton()
+            {
+                JButton b = (arrowDownIcon != null) ? new JButton(arrowDownIcon) : new JButton();
+                b.setBorder(new EmptyBorder(0, 6, 0, 6));
+                b.setContentAreaFilled(false);
+                b.setFocusPainted(false);
+                b.setOpaque(false);
+                arrowButtonRef = b;
+                return b;
+            }
+        });
+
+        // Swap arrow icon on popup visibility changes (if we have icons)
+        addPopupMenuListener(new PopupMenuListener()
+        {
+            @Override public void popupMenuWillBecomeVisible(PopupMenuEvent e)
+            {
+                if (arrowButtonRef != null && arrowUpIcon != null)
+                {
+                    arrowButtonRef.setIcon(arrowUpIcon);
+                }
+            }
+            @Override public void popupMenuWillBecomeInvisible(PopupMenuEvent e)
+            {
+                if (arrowButtonRef != null && arrowDownIcon != null)
+                {
+                    arrowButtonRef.setIcon(arrowDownIcon);
+                }
+            }
+            @Override public void popupMenuCanceled(PopupMenuEvent e)
+            {
+                if (arrowButtonRef != null && arrowDownIcon != null)
+                {
+                    arrowButtonRef.setIcon(arrowDownIcon);
+                }
+            }
+        });
+
+        // Apply initial font scaling
+        applyFontScale();
     }
+
     public ComboBox(T[] items)
     {
         this();
         setItems(java.util.Arrays.asList(items));
     }
 
-
     public ComboBox(List<T> items)
     {
         this();
         setItems(items);
+    }
+
+    private ImageIcon loadIcon(String path)
+    {
+        java.net.URL url = getClass().getResource(path);
+        return (url != null) ? new ImageIcon(url) : null;
+    }
+
+    /**
+     * Compact preset (~10% smaller font).
+     */
+    public void setCompact(boolean compact)
+    {
+        setFontScale(compact ? 0.9 : 1.0);
+    }
+
+    /**
+     * Arbitrary font scaling (1.0 = normal).
+     */
+    public void setFontScale(double scale)
+    {
+        if (scale <= 0) scale = 1.0;
+        this.fontScale = scale;
+        applyFontScale();
+        repaint();
+    }
+
+    private void applyFontScale()
+    {
+        Font f = getFont();
+        if (f != null)
+        {
+            int newSize = Math.max(10, Math.round(f.getSize() * (float) fontScale));
+            setFont(new Font(f.getName(), f.getStyle(), newSize));
+        }
     }
 
     public void setItems(List<T> items)
@@ -117,6 +215,9 @@ public class ComboBox<T> extends JComboBox<T>
             {
                 label.setText("");
             }
+
+            // Use the exact same font as the combo for crisp text
+            label.setFont(ComboBox.this.getFont());
 
             container.add(label, BorderLayout.WEST);
 
