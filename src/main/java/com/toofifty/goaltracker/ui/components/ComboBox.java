@@ -1,125 +1,137 @@
 package com.toofifty.goaltracker.ui.components;
 
-import com.toofifty.goaltracker.GoalTrackerPlugin;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.function.Function;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicComboBoxUI;
-import javax.swing.ListCellRenderer;
+
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
 
+/**
+ * Simple generic ComboBox with optional formatter and a renderer
+ * that matches RuneLite dark styling. Includes a helper to keep the
+ * popup open after a selection (for rapid multi-add flows).
+ */
 public class ComboBox<T> extends JComboBox<T>
 {
     private Function<T, String> formatter = null;
 
-    @SuppressWarnings("unchecked")
-    public ComboBox(List<T> items)
+    public ComboBox()
     {
-        this((T[]) items.toArray());
+        super();
+        setRenderer(new ComboBoxListRenderer());
+        // Keep consistent look with RuneLite
+        setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        setForeground(Color.WHITE);
+        setUI(new BasicComboBoxUI());
     }
-
     public ComboBox(T[] items)
     {
-        super(items);
+        this();
+        setItems(java.util.Arrays.asList(items));
+    }
 
-        setForeground(Color.WHITE);
-        setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        setFocusable(false);
-        setRenderer(new ComboBoxListRenderer<>(formatter));
-        setUI(new ComboBoxUI());
-        setBorder(new EmptyBorder(0, 0, 0, 0));
+
+    public ComboBox(List<T> items)
+    {
+        this();
+        setItems(items);
+    }
+
+    public void setItems(List<T> items)
+    {
+        DefaultComboBoxModel<T> model = new DefaultComboBoxModel<>();
+        if (items != null)
+        {
+            for (T it : items)
+            {
+                model.addElement(it);
+            }
+        }
+        setModel(model);
     }
 
     public void setFormatter(Function<T, String> formatter)
     {
         this.formatter = formatter;
-        setRenderer(new ComboBoxListRenderer<>(formatter));
+        repaint();
     }
 
-    @SuppressWarnings("unchecked")
-    public void setItems(List<T> items)
+    /**
+     * Re-opens the popup after a selection is made, enabling fast repeated adds.
+     * Call this once after constructing the combo if you want the behavior.
+     */
+    public void setStayOpenOnSelection(boolean stayOpen)
     {
-        removeAllItems();
-        for (T item : items) {
-            addItem(item);
-        }
-        if (getItemCount() > 0) {
-            setSelectedIndex(0);
+        if (stayOpen)
+        {
+            this.addActionListener(e ->
+                SwingUtilities.invokeLater(() -> this.setPopupVisible(true))
+            );
         }
     }
-}
 
-class ComboBoxUI extends BasicComboBoxUI
-{
-    private static final ImageIcon ARROW_UP;
-    private static final ImageIcon ARROW_DOWN;
-
-    static {
-        final BufferedImage arrowUp = ImageUtil.loadImageResource(
-            GoalTrackerPlugin.class, "/combo_arrow_up.png");
-        ARROW_UP = new ImageIcon(arrowUp);
-
-        final BufferedImage arrowDown = ImageUtil.loadImageResource(
-            GoalTrackerPlugin.class, "/combo_arrow_down.png");
-        ARROW_DOWN = new ImageIcon(arrowDown);
-    }
-
-    @Override
-    protected JButton createArrowButton()
+    private class ComboBoxListRenderer implements ListCellRenderer<T>
     {
-        JButton button = new JButton();
-        button.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        button.setBorder(new EmptyBorder(4, 4, 4, 4));
-        button.setBorderPainted(false);
-        button.add(new JLabel(ARROW_DOWN));
-        return button;
-    }
-}
+        @Override
+        public Component getListCellRendererComponent(
+            JList<? extends T> list,
+            T value,
+            int index,
+            boolean isSelected,
+            boolean cellHasFocus)
+        {
+            JPanel container = new JPanel(new BorderLayout());
+            container.setBorder(new EmptyBorder(2, 6, 2, 6));
 
-class ComboBoxListRenderer<T> implements ListCellRenderer<T>
-{
-    private Function<T, String> formatter;
+            JLabel label = new JLabel();
+            label.setOpaque(false);
 
-    ComboBoxListRenderer(Function<T, String> formatter)
-    {
-        this.formatter = formatter;
-    }
+            if (value != null)
+            {
+                if (formatter != null)
+                {
+                    label.setText(formatter.apply(value));
+                }
+                else if (value instanceof Enum)
+                {
+                    label.setText(Text.titleCase((Enum<?>) value));
+                }
+                else
+                {
+                    label.setText(value.toString());
+                }
+            }
+            else
+            {
+                label.setText("");
+            }
 
-    @Override
-    public Component getListCellRendererComponent(
-        JList<? extends T> list, T o, int index, boolean isSelected,
-        boolean cellHasFocus)
-    {
-        JPanel container = new JPanel(new BorderLayout());
+            container.add(label, BorderLayout.WEST);
 
-        container.setBorder(new EmptyBorder(0, 4, 0, 4));
+            if (isSelected)
+            {
+                container.setBackground(ColorScheme.DARK_GRAY_COLOR);
+                label.setForeground(Color.WHITE);
+            }
+            else
+            {
+                container.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+                label.setForeground(Color.WHITE);
+            }
 
-        JLabel label = new JLabel();
-        if (formatter != null) {
-            label.setText(formatter.apply(o));
-        } else {
-            label.setText(
-                o instanceof Enum ? Text.titleCase((Enum<?>) o) : o.toString());
+            return container;
         }
-        container.add(label, BorderLayout.WEST);
-
-        if (isSelected) {
-            container.setBackground(ColorScheme.DARK_GRAY_COLOR);
-            label.setForeground(Color.WHITE);
-        }
-
-        return container;
     }
 }
