@@ -13,9 +13,19 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.FlatTextField;
 
 import javax.swing.*;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.Point;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.util.regex.Pattern;
+import java.awt.Color;
+import javax.swing.JDialog;
+import javax.swing.JButton;
+
+
+
 
 public class ItemTaskInput extends TaskInput
 {
@@ -53,6 +63,7 @@ public class ItemTaskInput extends TaskInput
                 .tooltipText("Choose an item")
                 .onItemSelected(this::setSelectedItem)
                 .build();
+            showCloseOverlay();
         });
         getInputRow().add(searchItemButton, BorderLayout.WEST);
 
@@ -108,6 +119,9 @@ public class ItemTaskInput extends TaskInput
 
             revalidate();
             repaint();
+
+            // Immediately add the item task
+            submit();
         });
     }
 
@@ -142,5 +156,49 @@ public class ItemTaskInput extends TaskInput
 
         revalidate();
         repaint();
+
+            // Immediately add the item task
+            submit();
+    
+    // Small floating red X button to close the item search popup
+    private void showCloseOverlay()
+    {
+        javax.swing.Timer t = new javax.swing.Timer(120, ev -> {
+            Window target = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+            if (target == null || !target.isShowing())
+            {
+                return;
+            }
+
+            // Create overlay dialog owned by the search window so it closes with it
+            final JDialog overlay = new JDialog(target);
+            overlay.setUndecorated(true);
+            overlay.setAlwaysOnTop(true);
+            JPanel header = new JPanel(new BorderLayout());
+            header.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+            JButton close = new JButton("X");
+            close.setForeground(Color.WHITE);
+            close.setBackground(ColorScheme.PROGRESS_ERROR_COLOR);
+            close.setBorder(new EmptyBorder(2, 6, 2, 6));
+            close.setFocusable(false);
+            close.addActionListener(e2 -> {
+                overlay.dispose();
+                // Try to close the target search window
+                if (target != null) target.dispose();
+            });
+            header.add(close, BorderLayout.EAST);
+            overlay.getContentPane().add(header);
+            overlay.pack();
+
+            // Position at top-right of the target window with slight inset
+            Point loc = target.getLocationOnScreen();
+            int x = loc.x + target.getWidth() - overlay.getWidth() - 6;
+            int y = loc.y + 6;
+            overlay.setLocation(x, y);
+            overlay.setVisible(true);
+        });
+        t.setRepeats(false);
+        t.start();
     }
+}
 }
