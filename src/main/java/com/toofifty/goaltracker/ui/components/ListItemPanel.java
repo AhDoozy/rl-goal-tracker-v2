@@ -9,6 +9,7 @@ import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -29,6 +30,7 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
 
     protected Consumer<T> reorderedListener;
     protected Consumer<T> removedListener;
+    protected BiConsumer<T, Integer> removedWithIndexListener;
 
     public ListItemPanel(ReorderableList<T> list, T item)
     {
@@ -41,27 +43,29 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
 
         moveUp.addActionListener(e -> {
             list.moveUp(item);
-            this.reorderedListener.accept(item);
+            if (this.reorderedListener != null) this.reorderedListener.accept(item);
         });
 
         moveDown.addActionListener(e -> {
             list.moveDown(item);
-            this.reorderedListener.accept(item);
+            if (this.reorderedListener != null) this.reorderedListener.accept(item);
         });
 
         moveToTop.addActionListener(e -> {
             list.moveToTop(item);
-            this.reorderedListener.accept(item);
+            if (this.reorderedListener != null) this.reorderedListener.accept(item);
         });
 
         moveToBottom.addActionListener(e -> {
             list.moveToBottom(item);
-            this.reorderedListener.accept(item);
+            if (this.reorderedListener != null) this.reorderedListener.accept(item);
         });
 
         removeItem.addActionListener(e -> {
+            int index = list.indexOf(item);
             list.remove(item);
-            this.removedListener.accept(item);
+            if (this.removedWithIndexListener != null) this.removedWithIndexListener.accept(item, index);
+            if (this.removedListener != null) this.removedListener.accept(item);
         });
 
         popupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -167,5 +171,9 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
 
     public void onReordered(Consumer<T> reorderListener) {
         this.reorderedListener = reorderListener;
+    }
+
+    public void onRemovedWithIndex(BiConsumer<T, Integer> removeListener) {
+        this.removedWithIndexListener = removeListener;
     }
 }

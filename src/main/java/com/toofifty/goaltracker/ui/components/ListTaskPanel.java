@@ -13,6 +13,8 @@ import java.awt.event.MouseEvent;
 import java.awt.Component;
 import javax.swing.SwingUtilities;
 import java.awt.Container;
+import com.toofifty.goaltracker.models.ActionHistory;
+import com.toofifty.goaltracker.models.ReorderTaskAction;
 
 public class ListTaskPanel extends ListItemPanel<Task>
 {
@@ -24,40 +26,116 @@ public class ListTaskPanel extends ListItemPanel<Task>
     private Consumer<Task> indentedListener;
     private Consumer<Task> unindentedListener;
 
+    private ActionHistory history;
+
+    private final MouseAdapter shiftClickRemoveListener = new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            if (e.isShiftDown() && SwingUtilities.isLeftMouseButton(e)) {
+                removeItem.doClick();
+            }
+        }
+    };
+
+    private void addShiftRemoveListenerRecursive(Component c)
+    {
+        c.addMouseListener(shiftClickRemoveListener);
+        if (c instanceof Container)
+        {
+            for (Component child : ((Container) c).getComponents())
+            {
+                addShiftRemoveListenerRecursive(child);
+            }
+        }
+    }
+
     public ListTaskPanel(ReorderableList<Task> list, Task item)
     {
         super(list, item);
 
         indentItem.addActionListener(e -> {
-            // Indent all of the items children
-            var index = list.indexOf(item);
+            int index = list.indexOf(item);
+            int baseIndent = item.getIndentLevel();
+
+            // Collect affected tasks (item + descendants until sibling/parent)
+            java.util.List<com.toofifty.goaltracker.models.task.Task> affected = new java.util.ArrayList<>();
+            java.util.List<Integer> oldIndents = new java.util.ArrayList<>();
+
+            affected.add(item);
+            oldIndents.add(baseIndent);
             for (int i = index + 1; i < list.size(); i++) {
                 var child = list.get(i);
-
-                // If a child is less indented then this item assume its a parent node and break
-                if (item.getIndentLevel() >= child.getIndentLevel()) break;
-
-                child.indent();
+                if (child.getIndentLevel() <= baseIndent) break;
+                affected.add(child);
+                oldIndents.add(child.getIndentLevel());
             }
 
-            item.indent();
+            ActionHistory.Action act = new ActionHistory.Action() {
+                @Override public void undo() {
+                    for (int i = 0; i < affected.size(); i++) {
+                        affected.get(i).setIndentLevel(oldIndents.get(i));
+                    }
+                }
+                @Override public void redo() {
+                    for (int i = 0; i < affected.size(); i++) {
+                        affected.get(i).setIndentLevel(oldIndents.get(i) + 1);
+                    }
+                }
+            };
+
+            if (history != null) {
+                act.redo();
+                history.push(act);
+            } else {
+                // Fallback: apply directly
+                for (int i = 0; i < affected.size(); i++) {
+                    affected.get(i).setIndentLevel(oldIndents.get(i) + 1);
+                }
+            }
+
             if (this.indentedListener != null) this.indentedListener.accept(item);
             refreshParentList();
         });
 
         unindentItem.addActionListener(e -> {
-            // Unindent all of the items children
-            var index = list.indexOf(item);
+            int index = list.indexOf(item);
+            int baseIndent = item.getIndentLevel();
+
+            // Collect affected tasks (item + descendants until sibling/parent)
+            java.util.List<com.toofifty.goaltracker.models.task.Task> affected = new java.util.ArrayList<>();
+            java.util.List<Integer> oldIndents = new java.util.ArrayList<>();
+
+            affected.add(item);
+            oldIndents.add(baseIndent);
             for (int i = index + 1; i < list.size(); i++) {
                 var child = list.get(i);
-
-                // If a child is less indented then this item assume its a parent node and break
-                if (item.getIndentLevel() >= child.getIndentLevel()) break;
-
-                child.unindent();
+                if (child.getIndentLevel() <= baseIndent) break;
+                affected.add(child);
+                oldIndents.add(child.getIndentLevel());
             }
 
-            item.unindent();
+            ActionHistory.Action act = new ActionHistory.Action() {
+                @Override public void undo() {
+                    for (int i = 0; i < affected.size(); i++) {
+                        affected.get(i).setIndentLevel(oldIndents.get(i));
+                    }
+                }
+                @Override public void redo() {
+                    for (int i = 0; i < affected.size(); i++) {
+                        affected.get(i).setIndentLevel(Math.max(0, oldIndents.get(i) - 1));
+                    }
+                }
+            };
+
+            if (history != null) {
+                act.redo();
+                history.push(act);
+            } else {
+                for (int i = 0; i < affected.size(); i++) {
+                    affected.get(i).setIndentLevel(Math.max(0, oldIndents.get(i) - 1));
+                }
+            }
+
             if (this.unindentedListener != null) this.unindentedListener.accept(item);
             refreshParentList();
         });
@@ -66,35 +144,13 @@ public class ListTaskPanel extends ListItemPanel<Task>
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.isShiftDown() && e.getButton() == MouseEvent.BUTTON1) {
-                    int index = list.indexOf(item);
-                    int baseIndent = item.getIndentLevel();
-                    // Remove all children that are more indented than this item
-                    while (index + 1 < list.size() && list.get(index + 1).getIndentLevel() > baseIndent) {
-                        list.remove(list.get(index + 1));
-                    }
-                    // Remove the item itself
+                    // Delegate to the Remove action (which cascades children and notifies listeners)
                     removeItem.doClick();
-                    refreshParentList();
                 }
             }
         });
-        // Also apply the same shift-click removal listener to all child components
-        for (Component child : getComponents()) {
-            child.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (e.isShiftDown() && e.getButton() == MouseEvent.BUTTON1) {
-                        int index = list.indexOf(item);
-                        int baseIndent = item.getIndentLevel();
-                        while (index + 1 < list.size() && list.get(index + 1).getIndentLevel() > baseIndent) {
-                            list.remove(list.get(index + 1));
-                        }
-                        removeItem.doClick();
-                        refreshParentList();
-                    }
-                }
-            });
-        }
+        // Apply the same shift-click removal listener to all nested components
+        addShiftRemoveListenerRecursive(this);
     }
 
     @Override
@@ -104,18 +160,56 @@ public class ListTaskPanel extends ListItemPanel<Task>
         javax.swing.JMenu moveMenu = new javax.swing.JMenu("Move");
         boolean hasMove = false;
         if (!list.isFirst(item)) {
+            for (var l : moveUp.getActionListeners()) moveUp.removeActionListener(l);
+            moveUp.addActionListener(e -> {
+                int oldIndex = list.indexOf(item);
+                int newIndex = Math.max(0, oldIndex - 1);
+                list.moveUp(item);
+                if (history != null) {
+                    history.push(new ReorderTaskAction(list, item, oldIndex, newIndex));
+                }
+                refreshParentList();
+            });
             moveMenu.add(moveUp);
             hasMove = true;
         }
         if (!list.isLast(item)) {
+            for (var l : moveDown.getActionListeners()) moveDown.removeActionListener(l);
+            moveDown.addActionListener(e -> {
+                int oldIndex = list.indexOf(item);
+                int newIndex = Math.min(list.size() - 1, oldIndex + 1);
+                list.moveDown(item);
+                if (history != null) {
+                    history.push(new ReorderTaskAction(list, item, oldIndex, newIndex));
+                }
+                refreshParentList();
+            });
             moveMenu.add(moveDown);
             hasMove = true;
         }
         if (!list.isFirst(item)) {
+            for (var l : moveToTop.getActionListeners()) moveToTop.removeActionListener(l);
+            moveToTop.addActionListener(e -> {
+                int oldIndex = list.indexOf(item);
+                list.moveToTop(item);
+                if (history != null) {
+                    history.push(new ReorderTaskAction(list, item, oldIndex, 0));
+                }
+                refreshParentList();
+            });
             moveMenu.add(moveToTop);
             hasMove = true;
         }
         if (!list.isLast(item)) {
+            for (var l : moveToBottom.getActionListeners()) moveToBottom.removeActionListener(l);
+            moveToBottom.addActionListener(e -> {
+                int oldIndex = list.indexOf(item);
+                list.moveToBottom(item);
+                if (history != null) {
+                    history.push(new ReorderTaskAction(list, item, oldIndex, list.size() - 1));
+                }
+                refreshParentList();
+            });
             moveMenu.add(moveToBottom);
             hasMove = true;
         }
@@ -136,24 +230,50 @@ public class ListTaskPanel extends ListItemPanel<Task>
         String toggleLabel = "Mark as " + (item.getStatus() == Status.COMPLETED ? "Incomplete" : "Completed");
         JMenuItem toggleStatusItem = new JMenuItem(toggleLabel);
         toggleStatusItem.addActionListener(e -> {
+            // Determine new status for the root item
             Status newStatus = (item.getStatus() == Status.COMPLETED ? Status.NOT_STARTED : Status.COMPLETED);
-            item.setStatus(newStatus);
 
-            // Cascade status change to all indented children
+            // Collect affected tasks (item + descendants until sibling/parent) and their old statuses
+            java.util.List<Task> affected = new java.util.ArrayList<>();
+            java.util.List<Status> oldStatuses = new java.util.ArrayList<>();
+
             int index = list.indexOf(item);
             int baseIndent = item.getIndentLevel();
+            affected.add(item);
+            oldStatuses.add(item.getStatus());
             for (int i = index + 1; i < list.size(); i++) {
                 Task child = list.get(i);
-                if (child.getIndentLevel() <= baseIndent) {
-                    break; // stop at siblings or parents
+                if (child.getIndentLevel() <= baseIndent) break;
+                affected.add(child);
+                oldStatuses.add(child.getStatus());
+            }
+
+            ActionHistory.Action act = new ActionHistory.Action() {
+                @Override public void undo() {
+                    for (int i = 0; i < affected.size(); i++) {
+                        affected.get(i).setStatus(oldStatuses.get(i));
+                    }
                 }
-                child.setStatus(newStatus);
+                @Override public void redo() {
+                    for (Task t : affected) {
+                        t.setStatus(newStatus);
+                    }
+                }
+            };
+
+            if (history != null) {
+                act.redo();          // apply change now
+                history.push(act);   // record for undo/redo
+            } else {
+                // Fallback if no history injected
+                for (Task t : affected) {
+                    t.setStatus(newStatus);
+                }
             }
 
             if (taskContent != null) {
                 taskContent.refresh();
             }
-            // Refresh the entire list panel so UI updates immediately
             refreshParentList();
         });
         popupMenu.add(toggleStatusItem);
@@ -222,14 +342,18 @@ public class ListTaskPanel extends ListItemPanel<Task>
             removeItem.removeActionListener(l);
         }
         removeItem.addActionListener(e -> {
-            int index = list.indexOf(item);
+            int removedIndex = list.indexOf(item);
             int baseIndent = item.getIndentLevel();
             // Remove all children more indented than this item
-            while (index + 1 < list.size() && list.get(index + 1).getIndentLevel() > baseIndent) {
-                list.remove(list.get(index + 1));
+            while (removedIndex + 1 < list.size() && list.get(removedIndex + 1).getIndentLevel() > baseIndent) {
+                list.remove(list.get(removedIndex + 1));
             }
             // Remove the item itself
             list.remove(item);
+            // Notify listeners for Undo/Redo support
+            if (this.removedWithIndexListener != null) this.removedWithIndexListener.accept(item, removedIndex);
+            if (this.removedListener != null) this.removedListener.accept(item);
+            // Refresh UI
             refreshParentList();
         });
 
@@ -247,6 +371,13 @@ public class ListTaskPanel extends ListItemPanel<Task>
 
     public void setTaskContent(TaskItemContent taskContent) {
         this.taskContent = taskContent;
+        if (taskContent != null) {
+            addShiftRemoveListenerRecursive(taskContent);
+        }
+    }
+
+    public void setActionHistory(ActionHistory history) {
+        this.history = history;
     }
 
     private void refreshParentList()

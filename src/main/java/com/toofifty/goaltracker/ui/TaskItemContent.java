@@ -16,6 +16,11 @@ import java.awt.*;
 
 import static com.toofifty.goaltracker.utils.Constants.STATUS_TO_COLOR;
 
+import com.toofifty.goaltracker.models.ActionHistory;
+import com.toofifty.goaltracker.models.ToggleCompleteAction;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 public class TaskItemContent extends JPanel implements Refreshable
 {
     private final Task task;
@@ -24,9 +29,13 @@ public class TaskItemContent extends JPanel implements Refreshable
     private final JLabel titleLabel = new JLabel();
     private final JLabel iconLabel = new JLabel();
 
+    private final GoalTrackerPlugin plugin;
+    private ActionHistory actionHistory;
+
     TaskItemContent(GoalTrackerPlugin plugin, Goal goal, Task task)
     {
         super(new BorderLayout());
+        this.plugin = plugin;
         this.task = task;
         this.goal = goal;
         iconService = plugin.getTaskIconService();
@@ -40,6 +49,40 @@ public class TaskItemContent extends JPanel implements Refreshable
         add(iconWrapper, BorderLayout.WEST);
 
         plugin.getUiStatusManager().addRefresher(task, this::refresh);
+
+        // Right-click to toggle completion with ActionHistory
+        titleLabel.addMouseListener(new MouseAdapter()
+        {
+            private void showMenu(MouseEvent e)
+            {
+                if (!e.isPopupTrigger()) return;
+
+                boolean currentlyComplete = "COMPLETED".equals(task.getStatus().toString());
+                String label = currentlyComplete ? "Mark as Incomplete" : "Mark as Completed";
+
+                JPopupMenu menu = new JPopupMenu();
+                JMenuItem toggle = new JMenuItem(label);
+                toggle.addActionListener(a -> {
+                    ToggleCompleteAction act = new ToggleCompleteAction(task, currentlyComplete, !currentlyComplete);
+                    act.redo(); // apply immediately
+                    if (actionHistory != null)
+                    {
+                        actionHistory.push(act); // record for undo/redo
+                    }
+                    plugin.getUiStatusManager().refresh(goal);
+                });
+                menu.add(toggle);
+                menu.show(titleLabel, e.getX(), e.getY());
+            }
+
+            @Override public void mousePressed(MouseEvent e) { showMenu(e); }
+            @Override public void mouseReleased(MouseEvent e) { showMenu(e); }
+        });
+    }
+
+    public void setActionHistory(ActionHistory history)
+    {
+        this.actionHistory = history;
     }
 
     @Override

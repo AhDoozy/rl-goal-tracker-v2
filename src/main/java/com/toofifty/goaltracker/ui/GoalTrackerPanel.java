@@ -3,6 +3,7 @@ package com.toofifty.goaltracker.ui;
 import com.toofifty.goaltracker.GoalManager;
 import com.toofifty.goaltracker.GoalTrackerPlugin;
 import com.toofifty.goaltracker.models.Goal;
+import com.toofifty.goaltracker.models.UndoStack;
 import com.toofifty.goaltracker.models.task.Task;
 import com.toofifty.goaltracker.ui.components.ListItemPanel;
 import com.toofifty.goaltracker.ui.components.ListPanel;
@@ -25,6 +26,10 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     private final JPanel mainPanel = new JPanel(new BorderLayout());
     private final ListPanel<Goal> goalListPanel;
     private final GoalTrackerPlugin plugin;
+    private final GoalManager goalManager;
+    private final UndoStack<Goal> undoStack = new UndoStack<>();
+    private TextButton undoButtonRef;
+    private TextButton redoButtonRef;
     private GoalPanel goalPanel;
     private Consumer<Goal> goalAddedListener;
     private Consumer<Goal> goalUpdatedListener;
@@ -36,6 +41,7 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     {
         super(false);
         this.plugin = plugin;
+        this.goalManager = goalManager;
 
         setBackground(ColorScheme.DARK_GRAY_COLOR);
         setLayout(new BorderLayout());
@@ -98,6 +104,9 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
 
                 panel.onClick(e -> this.view(goal));
                 panel.add(new GoalItemContent(plugin, goal));
+                panel.onRemovedWithIndex((removedGoal, index) -> {
+                    recordGoalRemoval(removedGoal, index);
+                });
 
                 return panel;
             }
@@ -114,30 +123,6 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     public void view(Goal goal)
     {
         removeAll();
-
-        // Top control bar: Back, Undo, Redo
-        JPanel controlBar = new JPanel(new BorderLayout());
-        controlBar.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        controlBar.setBorder(new EmptyBorder(6, 6, 6, 6));
-
-        JPanel leftButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        leftButtons.setOpaque(true);
-        leftButtons.setBackground(ColorScheme.DARK_GRAY_COLOR);
-
-        TextButton backButton = new TextButton("< Back", e -> this.home()).narrow();
-        TextButton undoButton = new TextButton("Undo", e -> { /* hook up in future */ }).narrow();
-        TextButton redoButton = new TextButton("Redo", e -> { /* hook up in future */ }).narrow();
-        undoButton.setEnabled(false);
-        redoButton.setEnabled(false);
-        undoButton.setToolTipText("Undo last change (coming soon)");
-        redoButton.setToolTipText("Redo last change (coming soon)");
-
-        leftButtons.add(backButton);
-        leftButtons.add(undoButton);
-        leftButtons.add(redoButton);
-        controlBar.add(leftButtons, BorderLayout.WEST);
-
-        add(controlBar, BorderLayout.NORTH);
 
         this.goalPanel = new GoalPanel(plugin, goal, this::home);
 
@@ -205,5 +190,72 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         if (this.goalPanel != null) {
             this.goalPanel.onTaskAdded(this.taskAddedListener);
         }
+    }
+
+    private void updateUndoRedoButtons()
+    {
+        if (undoButtonRef != null)
+        {
+            undoButtonRef.setEnabled(undoStack.hasUndo());
+            undoButtonRef.setToolTipText(undoStack.hasUndo() ? null : "Nothing to undo");
+        }
+        if (redoButtonRef != null)
+        {
+            redoButtonRef.setEnabled(undoStack.hasRedo());
+            redoButtonRef.setToolTipText(undoStack.hasRedo() ? null : "Nothing to redo");
+        }
+    }
+
+    private void doUndo()
+    {
+        var entry = undoStack.popForUndo();
+        if (entry == null) { updateUndoRedoButtons(); return; }
+
+        java.util.List<Goal> goals = goalManager.getGoals();
+        int idx = Math.max(0, Math.min(entry.getIndex(), goals.size()));
+        goals.add(idx, entry.getItem());
+
+        // If we are on the home view, refresh the list; otherwise leave as-is.
+        if (goalPanel == null)
+        {
+            goalListPanel.tryBuildList();
+            goalListPanel.refresh();
+            revalidate();
+            repaint();
+        }
+        updateUndoRedoButtons();
+    }
+
+    private void doRedo()
+    {
+        var entry = undoStack.popForRedo();
+        if (entry == null) { updateUndoRedoButtons(); return; }
+
+        java.util.List<Goal> goals = goalManager.getGoals();
+        int idx = goals.indexOf(entry.getItem());
+        if (idx >= 0)
+        {
+            goals.remove(idx);
+        }
+        // If on home view, refresh
+        if (goalPanel == null)
+        {
+            goalListPanel.tryBuildList();
+            goalListPanel.refresh();
+            revalidate();
+            repaint();
+        }
+        updateUndoRedoButtons();
+    }
+
+    /**
+     * Call this when a goal is removed from the home list to record it for Undo.
+     * @param goal the goal that was removed
+     * @param index the index it had before removal
+     */
+    public void recordGoalRemoval(Goal goal, int index)
+    {
+        undoStack.pushRemove(goal, index);
+        updateUndoRedoButtons();
     }
 }

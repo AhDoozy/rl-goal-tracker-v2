@@ -2,6 +2,8 @@ package com.toofifty.goaltracker.ui;
 
 import com.toofifty.goaltracker.GoalTrackerPlugin;
 import com.toofifty.goaltracker.models.Goal;
+import com.toofifty.goaltracker.models.ActionHistory;
+import com.toofifty.goaltracker.models.RemoveTaskAction;
 import com.toofifty.goaltracker.models.enums.TaskType;
 import com.toofifty.goaltracker.models.enums.Status;
 import com.toofifty.goaltracker.models.task.ManualTask;
@@ -31,6 +33,10 @@ public class GoalPanel extends JPanel implements Refreshable
     private Consumer<Task> taskAddedListener;
     private Consumer<Task> taskUpdatedListener;
 
+    private final ActionHistory actionHistory = new ActionHistory();
+    private JButton undoButton;
+    private JButton redoButton;
+
     GoalPanel(GoalTrackerPlugin plugin, Goal goal, Runnable closeListener)
     {
         super();
@@ -42,6 +48,35 @@ public class GoalPanel extends JPanel implements Refreshable
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBorder(new EmptyBorder(0, 0, 8, 0));
         add(headerPanel, BorderLayout.NORTH);
+
+        // Goal List Action Bar: Back, Undo, Redo
+        JPanel goalListActionBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        JButton backButton = new JButton("Back");
+        undoButton = new JButton("Undo");
+        redoButton = new JButton("Redo");
+
+        Font smallFont = backButton.getFont().deriveFont(Font.PLAIN, backButton.getFont().getSize() - 2f);
+        Dimension smallSize = new Dimension(65, 22);
+
+        backButton.setFont(smallFont);
+        undoButton.setFont(smallFont);
+        redoButton.setFont(smallFont);
+
+        backButton.setPreferredSize(smallSize);
+        undoButton.setPreferredSize(smallSize);
+        redoButton.setPreferredSize(smallSize);
+
+        backButton.addActionListener(e -> closeListener.run());
+        undoButton.addActionListener(e -> doUndo());
+        redoButton.addActionListener(e -> doRedo());
+
+        goalListActionBar.add(backButton);
+        goalListActionBar.add(undoButton);
+        goalListActionBar.add(redoButton);
+        goalListActionBar.setBorder(new EmptyBorder(0, 0, 10, 0)); // add spacing below
+        headerPanel.add(goalListActionBar, BorderLayout.NORTH);
+
+        updateUndoRedoButtons();
 
         descriptionInput = new EditableInput((value) -> {
             goal.setDescription(value);
@@ -59,7 +94,9 @@ public class GoalPanel extends JPanel implements Refreshable
 
         taskListPanel = new ListPanel<>(goal.getTasks(), (task) -> {
             ListTaskPanel taskPanel = new ListTaskPanel(goal.getTasks(), task);
+            taskPanel.setActionHistory(actionHistory);
             TaskItemContent taskContent = new TaskItemContent(plugin, goal, task);
+            taskContent.setActionHistory(actionHistory);
             taskPanel.add(taskContent);
             taskPanel.setTaskContent(taskContent);
             taskContent.refresh();
@@ -76,6 +113,11 @@ public class GoalPanel extends JPanel implements Refreshable
                 this.goalUpdatedListener.accept(goal);
                 plugin.getUiStatusManager().refresh(goal);
                 this.refresh();
+            });
+
+            taskPanel.onRemovedWithIndex((removedTask, index) -> {
+                actionHistory.push(new RemoveTaskAction(goal.getTasks(), removedTask, index));
+                updateUndoRedoButtons();
             });
 
             return taskPanel;
@@ -200,5 +242,31 @@ public class GoalPanel extends JPanel implements Refreshable
             }
         }
         return null;
+    }
+
+    private void updateUndoRedoButtons()
+    {
+        if (undoButton != null)
+        {
+            undoButton.setEnabled(actionHistory.hasUndo());
+        }
+        if (redoButton != null)
+        {
+            redoButton.setEnabled(actionHistory.hasRedo());
+        }
+    }
+
+    private void doUndo()
+    {
+        actionHistory.undo();
+        refreshTaskList();
+        updateUndoRedoButtons();
+    }
+
+    private void doRedo()
+    {
+        actionHistory.redo();
+        refreshTaskList();
+        updateUndoRedoButtons();
     }
 }
