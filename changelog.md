@@ -33,3 +33,4 @@
 - Goal name input updated to support copy, paste, cut, and select-all actions via both context menu and keyboard shortcuts.
 - Remove menu option enhanced to also delete all indented child tasks when removing a parent.
 - Remove menu label updated so the "(Shift+Left Click)" hint displays smaller and in gray.
+- Home view updated: "Goal Tracker" title moved to its own header, with a new action bar beneath it containing **+ Add goal**, **Move**, and **Bulk Edit** buttons (the latter two are placeholders marked "Coming soon").

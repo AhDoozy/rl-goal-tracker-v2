@@ -46,22 +46,51 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         titlePanel.setLayout(new BorderLayout());
         titlePanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-        titlePanel.add(
-            new TextButton("+ Add goal",
-                e -> {
-                    Goal goal = goalManager.createGoal();
-                    view(goal);
-
-                    if (Objects.nonNull(this.goalAddedListener)) this.goalAddedListener.accept(goal);
-                    if (Objects.nonNull(this.goalUpdatedListener)) this.goalUpdatedListener.accept(goal);
-                }
-            ).narrow(), BorderLayout.EAST);
+        // (Removed "+ Add goal" button from the title panel)
 
         JLabel title = new JLabel();
         title.setText("Goal Tracker");
         title.setForeground(Color.WHITE);
         title.setFont(FontManager.getRunescapeBoldFont());
         titlePanel.add(title, BorderLayout.WEST);
+
+        // New action bar below the title
+        JPanel actionBar = new JPanel(new BorderLayout());
+        actionBar.setBorder(new EmptyBorder(6, 10, 6, 10));
+        actionBar.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+        JPanel actionsLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        actionsLeft.setOpaque(true);
+        actionsLeft.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+        TextButton addGoalBtn = new TextButton("+ Add goal",
+            e -> {
+                Goal goal = goalManager.createGoal();
+                view(goal);
+
+                if (Objects.nonNull(this.goalAddedListener)) this.goalAddedListener.accept(goal);
+                if (Objects.nonNull(this.goalUpdatedListener)) this.goalUpdatedListener.accept(goal);
+            }
+        ).narrow();
+
+        TextButton moveBtn = new TextButton("Move", e -> {}).narrow();
+        moveBtn.setEnabled(false);
+        moveBtn.setToolTipText("Coming soon");
+
+        TextButton bulkEditBtn = new TextButton("Bulk Edit", e -> {}).narrow();
+        bulkEditBtn.setEnabled(false);
+        bulkEditBtn.setToolTipText("Coming soon");
+
+        actionsLeft.add(addGoalBtn);
+        actionsLeft.add(moveBtn);
+        actionsLeft.add(bulkEditBtn);
+        actionBar.add(actionsLeft, BorderLayout.WEST);
+
+        // Stack title and action bar into a single header container
+        JPanel headerContainer = new JPanel(new BorderLayout());
+        headerContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        headerContainer.add(titlePanel, BorderLayout.NORTH);
+        headerContainer.add(actionBar, BorderLayout.SOUTH);
 
         goalListPanel = new ListPanel<>(goalManager.getGoals(),
             (goal) -> {
@@ -76,7 +105,7 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         goalListPanel.setGap(0);
         goalListPanel.setPlaceholder("Add a new goal using the button above");
 
-        mainPanel.add(titlePanel, BorderLayout.NORTH);
+        mainPanel.add(headerContainer, BorderLayout.NORTH);
         mainPanel.add(goalListPanel, BorderLayout.CENTER);
 
         home();
