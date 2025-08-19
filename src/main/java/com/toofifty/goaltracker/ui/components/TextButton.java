@@ -43,8 +43,31 @@ public class TextButton extends JLabel
         onClick(clickListener);
     }
 
-    public TextButton onClick(Consumer<MouseEvent> clickListener) {
-        return null;
+    public TextButton onClick(Consumer<MouseEvent> clickListener)
+    {
+        addMouseListener(new MouseAdapter()
+        {
+            @Override
+            public void mousePressed(MouseEvent e)
+            {
+                clickListener.accept(e);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e)
+            {
+                setForeground(mainColor.darker());
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e)
+            {
+                setForeground(mainColor);
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            }
+        });
+        return this;
     }
 
     public TextButton narrow()
