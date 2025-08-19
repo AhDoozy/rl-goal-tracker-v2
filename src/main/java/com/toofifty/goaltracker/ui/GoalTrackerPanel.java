@@ -86,6 +86,30 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     {
         removeAll();
 
+        // Top control bar: Back, Undo, Redo
+        JPanel controlBar = new JPanel(new BorderLayout());
+        controlBar.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        controlBar.setBorder(new EmptyBorder(6, 6, 6, 6));
+
+        JPanel leftButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        leftButtons.setOpaque(true);
+        leftButtons.setBackground(ColorScheme.DARK_GRAY_COLOR);
+
+        TextButton backButton = new TextButton("< Back", e -> this.home()).narrow();
+        TextButton undoButton = new TextButton("Undo", e -> { /* hook up in future */ }).narrow();
+        TextButton redoButton = new TextButton("Redo", e -> { /* hook up in future */ }).narrow();
+        undoButton.setEnabled(false);
+        redoButton.setEnabled(false);
+        undoButton.setToolTipText("Undo last change (coming soon)");
+        redoButton.setToolTipText("Redo last change (coming soon)");
+
+        leftButtons.add(backButton);
+        leftButtons.add(undoButton);
+        leftButtons.add(redoButton);
+        controlBar.add(leftButtons, BorderLayout.WEST);
+
+        add(controlBar, BorderLayout.NORTH);
+
         this.goalPanel = new GoalPanel(plugin, goal, this::home);
 
         this.goalPanel.onGoalUpdated(this.goalUpdatedListener);
