@@ -14,7 +14,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.regex.Pattern;
 
-public class SkillXpTaskInput extends TaskInput<SkillXpTask>
+public class SkillXpTaskInput extends TaskInput
 {
     private final FlatTextField xpField;
     private final ComboBox<Skill> skillField;
@@ -79,7 +79,7 @@ public class SkillXpTaskInput extends TaskInput<SkillXpTask>
         addTask(SkillXpTask.builder()
             .skill((Skill) skillField.getSelectedItem())
             .xp(Integer.parseInt(xpField.getText()))
-        .build());
+            .build());
     }
 
     @Override

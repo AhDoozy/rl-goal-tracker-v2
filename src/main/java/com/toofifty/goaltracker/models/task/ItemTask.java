@@ -11,7 +11,8 @@ import java.awt.image.BufferedImage;
 @Setter
 @Getter
 @SuperBuilder
-public class ItemTask extends Task
+public class
+ItemTask extends Task
 {
     private transient BufferedImage cachedIcon;
     private int quantity;

@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-public class ManualTaskInput extends TaskInput<ManualTask>
+public class ManualTaskInput extends TaskInput
 {
     private final FlatTextField titleField;
 
