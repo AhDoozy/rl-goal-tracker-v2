@@ -23,7 +23,6 @@ public class TaskItemContent extends JPanel implements Refreshable
     private final TaskIconService iconService;
     private final JLabel titleLabel = new JLabel();
     private final JLabel iconLabel = new JLabel();
-    private final JButton prereqButton = new JButton("Add prereqs");
 
     TaskItemContent(GoalTrackerPlugin plugin, Goal goal, Task task)
     {
@@ -34,25 +33,6 @@ public class TaskItemContent extends JPanel implements Refreshable
 
         titleLabel.setPreferredSize(new Dimension(0, 24));
         add(titleLabel, BorderLayout.CENTER);
-
-        if (task instanceof QuestTask) {
-            prereqButton.setMargin(new Insets(1, 3, 1, 3));
-            prereqButton.setFont(prereqButton.getFont().deriveFont(prereqButton.getFont().getSize2D() * 0.75f));
-            prereqButton.setFocusable(false);
-            prereqButton.addActionListener(e -> {
-                QuestTask qt = (QuestTask) task;
-                List<Task> reqs = QuestRequirements.getRequirements(qt.getQuest(), qt.getIndentLevel());
-                // Insert directly after this item
-                int insertAt = Math.max(0, goal.getTasks().indexOf(task) + 1);
-                goal.getTasks().addAll(insertAt, reqs);
-                Container parent = SwingUtilities.getAncestorOfClass(ListPanel.class, TaskItemContent.this);
-                if (parent instanceof ListPanel) {
-                    ((ListPanel<?>) parent).tryBuildList();
-                    ((ListPanel<?>) parent).refresh();
-                }
-            });
-            add(prereqButton, BorderLayout.EAST);
-        }
 
         JPanel iconWrapper = new JPanel(new BorderLayout());
         iconWrapper.setBorder(new EmptyBorder(4, 0, 0, 4));

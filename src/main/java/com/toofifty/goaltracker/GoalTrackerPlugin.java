@@ -21,10 +21,10 @@ import net.runelite.client.events.SessionOpen;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.game.chatbox.ChatboxItemSearch;
+import net.runelite.client.game.chatbox.ChatboxPanelManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
-import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.AsyncBufferedImage;
 
@@ -59,6 +59,10 @@ public class GoalTrackerPlugin extends Plugin
     @Getter
     @Inject
     private ChatboxItemSearch itemSearch;
+
+    @Getter
+    @Inject
+    private ChatboxPanelManager chatboxPanelManager;
 
     @Inject
     private ClientToolbar clientToolbar;

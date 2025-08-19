@@ -52,12 +52,11 @@ public abstract class TaskInput extends JPanel
 
         inputRow = new JPanel(new BorderLayout());
         inputRow.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-
-        TextButton addButton = new TextButton("Add");
-        addButton.onClick(e -> submit());
-
-        inputRow.add(addButton, BorderLayout.EAST);
-
+        if (showAddButton()) {
+            TextButton addButton = new TextButton("Add");
+            addButton.onClick(e -> submit());
+            inputRow.add(addButton, BorderLayout.EAST);
+        }
         add(inputRow, constraints);
         constraints.gridy++;
     }
@@ -90,5 +89,9 @@ public abstract class TaskInput extends JPanel
     {
         this.listener = listener;
         return this;
+    }
+    protected boolean showAddButton()
+    {
+        return true;
     }
 }
