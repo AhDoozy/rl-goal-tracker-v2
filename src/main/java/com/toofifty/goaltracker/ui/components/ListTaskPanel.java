@@ -217,7 +217,23 @@ public class ListTaskPanel extends ListItemPanel<Task>
             }
         }
 
-        removeItem.setText("Remove (Shift+Left Click)");
+        // Make the Remove action also delete all indented children of this item
+        for (var l : removeItem.getActionListeners()) {
+            removeItem.removeActionListener(l);
+        }
+        removeItem.addActionListener(e -> {
+            int index = list.indexOf(item);
+            int baseIndent = item.getIndentLevel();
+            // Remove all children more indented than this item
+            while (index + 1 < list.size() && list.get(index + 1).getIndentLevel() > baseIndent) {
+                list.remove(list.get(index + 1));
+            }
+            // Remove the item itself
+            list.remove(item);
+            refreshParentList();
+        });
+
+        removeItem.setText("<html>Remove <span style='font-size: smaller; color: gray;'>(Shift+Left Click)</span></html>");
         popupMenu.add(removeItem);
     }
 

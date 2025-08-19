@@ -75,4 +75,7 @@ public class TextButton extends JLabel
         setBorder(new EmptyBorder(0, 2, 0, 2));
         return this;
     }
+
+    public void setOnClick(Object o) {
+    }
 }
