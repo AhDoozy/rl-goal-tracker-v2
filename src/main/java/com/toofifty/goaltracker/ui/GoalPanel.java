@@ -22,6 +22,7 @@ import java.awt.BorderLayout;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javax.swing.border.EmptyBorder;
+import javax.swing.BorderFactory;
 import net.runelite.client.ui.ColorScheme;
 
 public class GoalPanel extends JPanel implements Refreshable
@@ -88,7 +89,12 @@ public class GoalPanel extends JPanel implements Refreshable
             taskPanel.add(taskContent);
             taskPanel.setTaskContent(taskContent);
             taskContent.refresh();
-            taskPanel.setBorder(new EmptyBorder(2, 4, 2, 4));
+            taskPanel.setOpaque(true);
+            taskPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+            taskPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(4, 6, 0, 6, ColorScheme.DARKER_GRAY_COLOR), // darker line for contrast
+                new EmptyBorder(2, 4, 2, 4)
+            ));
 
 
             taskPanel.onIndented(e -> {

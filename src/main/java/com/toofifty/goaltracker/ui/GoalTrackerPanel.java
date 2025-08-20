@@ -83,17 +83,8 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
             if (goalAddedListener != null) goalAddedListener.accept(goal);
             if (goalUpdatedListener != null) goalUpdatedListener.accept(goal);
         });
-        ActionBarButton moveBtn = new ActionBarButton("Move", () -> {});
-        moveBtn.setEnabled(false);
-        moveBtn.setToolTipText("Coming soon");
-
-        ActionBarButton bulkEditBtn = new ActionBarButton("Bulk Edit", () -> {});
-        bulkEditBtn.setEnabled(false);
-        bulkEditBtn.setToolTipText("Coming soon");
 
         actionBar.left().add(addGoalBtn);
-        actionBar.left().add(moveBtn);
-        actionBar.left().add(bulkEditBtn);
 
         JPanel headerContainer = new JPanel(new BorderLayout());
         headerContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);

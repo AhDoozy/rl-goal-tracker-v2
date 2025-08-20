@@ -80,8 +80,19 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
         this.list = list;
         this.item = item;
 
-        setBorder(new EmptyBorder(8, 8, 8, 8));
-        setBackground(ColorScheme.DARK_GRAY_COLOR);
+        if (item instanceof Goal) {
+            setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                new EmptyBorder(4, 2, 4, 2), // minimal outer spacing
+                javax.swing.BorderFactory.createCompoundBorder(
+                    javax.swing.BorderFactory.createLineBorder(java.awt.Color.DARK_GRAY, 1, true), // rounded card outline
+                    new EmptyBorder(2, 4, 2, 4) // minimal inner padding
+                )
+            ));
+            setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        } else {
+            setBorder(new EmptyBorder(2, 4, 2, 4)); // add horizontal and vertical spacing for tasks
+            setBackground(ColorScheme.DARK_GRAY_COLOR);
+        }
 
         moveUp.addActionListener(e -> {
             list.moveUp(item);
@@ -204,13 +215,17 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
             @Override
             public void mouseEntered(MouseEvent e)
             {
-                setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+                if (item instanceof Goal) {
+                    setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+                }
             }
 
             @Override
             public void mouseExited(MouseEvent e)
             {
-                setBackground(ColorScheme.DARK_GRAY_COLOR);
+                if (item instanceof Goal) {
+                    setBackground(ColorScheme.DARKER_GRAY_COLOR);
+                }
             }
         };
 

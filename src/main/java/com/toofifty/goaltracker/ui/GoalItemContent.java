@@ -1,4 +1,5 @@
 package com.toofifty.goaltracker.ui;
+import net.runelite.client.ui.ColorScheme;
 
 import com.toofifty.goaltracker.GoalTrackerPlugin;
 import com.toofifty.goaltracker.models.Goal;
@@ -26,6 +27,10 @@ public class GoalItemContent extends JPanel implements Refreshable
     {
         super(new BorderLayout());
         this.goal = goal;
+
+        setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8)); // padding for centered text
+        setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        setOpaque(true);
 
         add(title, BorderLayout.WEST);
         // Make goal title editable with standard copy/paste
