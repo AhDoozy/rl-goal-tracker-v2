@@ -50,3 +50,4 @@
 - GoalTrackerPanel `home()` method fixed so returning from Goal view refreshes and displays the goal list instead of a blank panel.
 - ListPanel `refresh()` updated to rebuild list before refreshing children, preventing stale or empty views.
 - Improved accuracy of mouse selection in home goal list; click/hover listeners now consistently cover the entire item area.
+- Goal name input now fully supports keyboard shortcuts (Ctrl/Cmd+C, V, X, A, Insert/Delete variants) and right-click context menu for copy/paste across all platforms.

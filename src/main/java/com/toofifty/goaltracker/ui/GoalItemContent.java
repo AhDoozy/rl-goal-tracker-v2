@@ -17,7 +17,7 @@ import static com.toofifty.goaltracker.utils.Constants.STATUS_TO_COLOR;
 
 public class GoalItemContent extends JPanel implements Refreshable
 {
-    private final JLabel title = new JLabel();
+    private final JTextField title = new JTextField();
     private final JLabel progress = new JLabel();
 
     private final Goal goal;
@@ -28,6 +28,29 @@ public class GoalItemContent extends JPanel implements Refreshable
         this.goal = goal;
 
         add(title, BorderLayout.WEST);
+        // Make goal title editable with standard copy/paste
+        title.setBorder(null);
+        title.setOpaque(false);
+        title.setEditable(true);
+        title.setDragEnabled(true);
+        title.setCaretPosition(0);
+        // Commit edits on Enter and when focus is lost
+        title.addActionListener(e -> {
+            String newText = title.getText();
+            if (newText != null) {
+                goal.setDescription(newText);
+            }
+        });
+        title.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                String newText = title.getText();
+                if (newText != null) {
+                    goal.setDescription(newText);
+                }
+            }
+        });
+
         add(progress, BorderLayout.EAST);
 
         plugin.getUiStatusManager().addRefresher(goal, this::refresh);
@@ -70,6 +93,7 @@ public class GoalItemContent extends JPanel implements Refreshable
 
         title.setText(goal.getDescription());
         title.setForeground(color);
+        title.setCaretColor(color);
 
         progress.setText(
             goal.getComplete().size() + "/" + goal.getTasks().size());
