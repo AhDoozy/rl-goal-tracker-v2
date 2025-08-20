@@ -1,3 +1,47 @@
+# RuneLite Goal Tracker Plugin v2
+
+This is a redesigned version of the RuneLite Goal Tracker plugin with major updates and improvements to enhance your experience managing OSRS goals.
+
+## New Features
+
+- Quest prerequisites button for easy access to quest requirements
+- Shift+Click removal of tasks for faster task management
+- Completion cascading to automatically complete related tasks
+- Dropdown quest selector for quicker quest task addition
+- Right-click menus for prereq and child completion options
+- Manual toggling for preset tasks to customize your workflow
+- Customizable chatbox colors for notifications
+- Automatic goal status checks for up-to-date progress
+- New ActionBar and ActionBarButton UI components
+- Hover states for better visual feedback
+- New context menu organization for streamlined interaction
+- Search toggle improvements for easier task searching
+
+## Improvements
+
+- More compact prereq button for a cleaner interface
+- Refreshed UI with updated design elements
+- Font and ComboBox readability enhancements
+- Consistent ActionBar UI throughout the plugin
+- Unified goal view header for a cohesive look
+- Improved context menus with better usability
+- Enhanced cursor and hover detection accuracy
+- Copy and paste support in the goal name input field
+
+## Fixes
+
+- Undo/Redo functionality cleanup for smoother editing
+- ActionBarButton painting fixes to prevent visual glitches
+- GoalTrackerPanel `home()` method refresh improvements
+- Correct refresh behavior in ListPanel
+- Improved mouse selection accuracy
+- Keyboard shortcut fixes and enhancements
+- Automatic removal of empty goals to keep lists tidy
+- Visual refresh issue resolved on login
+
+<details>
+<summary><span style="margin-left:8px;"><h2 style="display:inline;">Goal Tracker v1 Readme originally by dillydill123</h2></span></summary>
+
 # Runelite Goal Tracker Plugin
 
 Keep track of your OSRS goals and complete them automatically.
@@ -61,42 +105,4 @@ Track quest progress and completion, just select a quest or miniquest from the d
 
 Select an item using the search button and searching via the in-game chatbox, then set the desired quantity. The plugin will keep track of your items and tally up quantities stored in different inventories (bank, player, GIMP storage), and will be automatically completed once you get that amount of the item.
 
-## Changelog 
-
-## [Unreleased] - 2025-08-16
-
-### Recent Additions
-- Added right-click menu to parent goals to mark all child tasks as completed or incomplete.
-- Fixed visual refresh issue where quest task statuses didn’t show correctly on login unless re-entering the goal.
-- Added manual completion toggling for tasks created from presets, allowing users to right-click and mark them complete/incomplete just like quick-added tasks.
-- Added customizable color setting for task completion messages shown in the chatbox.
-- Implemented automatic goal status checking upon login to mark goals as completed if requirements are already met.
-
-## [Unreleased] - 2025-08-18
-
-### Added
-- Quest prerequisites button: Each quest task now has an **Add prereqs** button to insert its prerequisites directly beneath it.
-- Shift+Click removal: Shift+Click a task to remove it and all its indented children at once.
-- Completion cascading: Marking a parent quest as complete/incomplete now automatically updates all its child tasks.
-- Dropdown quest selector: Replaced fuzzy search with a clean dropdown of all quests, displaying natural names (e.g., "Tree Gnome Village").
-
-### Changed
-- Pre-req button made more compact (~25% smaller).
-- Prerequisite insertion now places child tasks directly below their parent instead of at the end of the list.
-- UI now automatically refreshes after task mutations (add/remove/indent/status change).
-
-## [Unreleased] - 2025-08-19
-
-### Added
-- Right-click menu option **Add pre-reqs** for quest tasks with prerequisites. Automatically inserts missing prerequisites as subtasks with proper indentation and prevents duplicates.
-
-### Changed
-- Right-click context menu reorganized: Move actions grouped under a **Move** submenu; Remove action now labeled as **Remove (Shift+Left Click)**.
-- Quest tasks now only display the **Add pre-reqs** option if they actually have missing prerequisites.
-- Search button now toggles between **Search...** and **Close** to open/close the item search overlay.
-- Removed in-panel close button; close control is now handled directly via the Search button toggle.
-- Green **+Add** button hidden for item search inputs (still visible for other input types).
-- Duplicate prerequisites can no longer be added multiple times to the same quest.
-- Quest dropdown now uses **RuneScape UF** font at a normal crisp size for improved readability.
-- ComboBox font scaling updated to use integer point sizes, preventing fuzzy text.
-- QuestTaskInput updated to rely on shared ComboBox styling for consistency.
+</details>
