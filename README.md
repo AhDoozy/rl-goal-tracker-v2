@@ -1,93 +1,105 @@
-# 🏆 RuneLite Goal Tracker v2
+# 🏆 Goal Tracker v2
 
 > A complete reimagining of the Goal Tracker plugin — rebuilt with a more modern UI, powerful new features, and improved stability to help you plan, track, and achieve your Old School RuneScape goals with ease.
 
 ---
 
-## ✨ New Features
+<details>
+<summary><h2 style="margin:0;display:inline;">✨ New Features</h2></summary>
 
-- 🌟 Quest prerequisites button for easy access to quest requirements
-- ⚡ Shift+Click removal of tasks for faster task management
-- 🔗 Completion cascading to automatically complete related tasks
-- 🎯 Dropdown quest selector for quicker quest task addition
-- 🖱️ Right-click menus for prereq and child completion options
-- 🔄 Manual toggling for preset tasks to customize your workflow
-- 🎨 Customizable chatbox colors for notifications
-- ⏱️ Automatic goal status checks for up-to-date progress
-- 🆕 New ActionBar and ActionBarButton UI components
-- 👆 Hover states for better visual feedback
-- 📋 New context menu organization for streamlined interaction
-- 🔍 Search toggle improvements for easier task searching
-- 📂 Task right‑click menu now includes a grouped **Move** submenu and cascading complete/incomplete toggle that applies to children.
-- 🖼️ Goal cards redesigned with lighter fills, full shadows, and hover/press effects only on the card face.
-- 📏 Thicker header divider under “Goal Tracker” for clearer separation.
-- 🔄 Automatic refresh propagation so Home goals update instantly when tasks change.
-- 💬 Completion chat messages delivered as proper Game messages with configurable colors.
+- Shift+Click removal of tasks for faster task management
+- Automatic goal status checks for up-to-date progress
+- New ActionBar and ActionBarButton UI components
+- Hover states for better visual feedback
+- New context menu organization for streamlined interaction
+- Search toggle improvements for easier task searching
+- New task right‑click menu with grouped **Move** submenu and cascading complete/incomplete toggle that applies to children (expanded beyond v1 functionality).
+- Goal cards redesigned with lighter fills, full shadows, and hover/press effects only on the card face.
+- Thicker header divider under “Goal Tracker” for clearer separation.
+- Automatic refresh propagation so Home goals update instantly when tasks change.
+- Completion chat messages delivered as proper Game messages with configurable colors.
 
----
+### ♻️ Redesigned Features
 
-## 🔧 Improvements
+- Redesigned quest prerequisites button for quick access to quest requirements
+- Redesigned completion cascading to automatically complete related tasks
+- Redesigned dropdown quest selector for faster quest task addition
+- Redesigned right-click menus for prerequisites and child completion options
+- Redesigned manual toggling for preset tasks to customize workflow
+- Redesigned chatbox notification colors (now fully customizable)
 
-- 🏷️ More compact prereq button for a cleaner interface
-- ✨ Refreshed UI with updated design elements
-- 🔠 Font and ComboBox readability enhancements
-- 🧩 Consistent ActionBar UI throughout the plugin
-- 🧑‍💻 Unified goal view header for a cohesive look
-- 🖱️ Improved context menus with better usability
-- 🎯 Enhanced cursor and hover detection accuracy
-- 📋 Copy and paste support in the goal name input field
-- 🔄 Context menu entries rebuilt dynamically before opening to always reflect the latest state.
-- 🖼️ Task and goal content now force an initial refresh so icons and text render correctly at login.
+</details>
 
----
-## 🐛 Fixes
+<details>
+<summary><h2 style="margin:0;display:inline;">🔧 Improvements</h2></summary>
 
-- ♻️ Undo/Redo functionality cleanup for smoother editing
-- 🎨 ActionBarButton painting fixes to prevent visual glitches
-- 🏠 GoalTrackerPanel `home()` method refresh improvements
-- 🔄 Correct refresh behavior in ListPanel
-- 🖱️ Improved mouse selection accuracy
-- ⌨️ Keyboard shortcut fixes and enhancements
-- 🗑️ Automatic removal of empty goals to keep lists tidy
-- 🔄 Visual refresh issue resolved on login
-- ✅ Fixed child task refresh issues by recursively refreshing all descendants.
-- 🗂️ Fixed blank panel issue when switching from Home to Goal view.
-- 💬 Fixed completion chat message not appearing on task completion.
+- More compact prereq button for a cleaner interface
+- Refreshed UI with updated design elements
+- Font and ComboBox readability enhancements
+- Consistent ActionBar UI throughout the plugin
+- Unified goal view header for a cohesive look
+- Improved context menus with better usability
+- Enhanced cursor and hover detection accuracy
+- Copy and paste support in the goal name input field
+- Context menu entries rebuilt dynamically before opening to always reflect the latest state.
+- Task and goal content now force an initial refresh so icons and text render correctly at login.
 
----
+</details>
 
-## 📥 Installation
+<details>
+<summary><h2 style="margin:0;display:inline;">🐛 Fixes</h2></summary>
+
+- Undo/Redo functionality cleanup for smoother editing
+- ActionBarButton painting fixes to prevent visual glitches
+- GoalTrackerPanel `home()` method refresh improvements
+- Correct refresh behavior in ListPanel
+- Improved mouse selection accuracy
+- Keyboard shortcut fixes and enhancements
+- Automatic removal of empty goals to keep lists tidy
+- Visual refresh issue resolved on login
+- Fixed child task refresh issues by recursively refreshing all descendants.
+- Fixed blank panel issue when switching from Home to Goal view.
+- Fixed completion chat message not appearing on task completion.
+
+</details>
+
+<details>
+<summary><h2 style="margin:0;display:inline;">📥 Installation</h2></summary>
 
 1. Open RuneLite.  
 2. Go to the Plugin Hub.  
 3. Search for "Goal Tracker v2".  
 4. Click **Install**.  
 
----
+</details>
 
-## 🚀 Getting Started
+<details>
+<summary><h2 style="margin:0;display:inline;">🚀 Getting Started</h2></summary>
 
 - Open the plugin panel in RuneLite once installed.  
 - Use **+ Add goal** to create a new goal.  
 - Add tasks (quests, skills, items, or manual) via the goal view.  
 - Use the new **ActionBar** buttons for navigation, undo/redo, and bulk actions.  
-- Right-click goals or tasks for advanced options like adding prerequisites, marking all children complete, or removing tasks quickly.  
 
----
+</details>
 
-## 🖼️ Screenshots
+<details>
+<summary><h2 style="margin:0;display:inline;">🖼️ Screenshots</h2></summary>
 
-_Coming soon_  
-*(Screenshots and GIFs will be added here to showcase the new UI and features.)*
+[screenshot] Home panel with goal cards  
+[screenshot] Inside a goal with task list  
+[screenshot] Right‑click menu on a task  
+[screenshot] Config panel with customizable chat color  
 
----
+</details>
 
-## 🙏 Acknowledgements
+<details>
+<summary><h2 style="margin:0;display:inline;">🙏 Acknowledgements</h2></summary>
 
 - Original plugin created by **dillydill123**.  
 - Fully renovated and maintained by **AhDoozy**.
 
----
+</details>
 ## 📄 License
 Licensed under the [BSD 2-Clause License](LICENSE).  
 

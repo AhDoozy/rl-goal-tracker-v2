@@ -20,6 +20,7 @@ public class GoalItemContent extends JPanel implements Refreshable
 {
     private final JTextField title = new JTextField();
     private final JLabel progress = new JLabel();
+    private final SlimBar progressBar = new SlimBar();
 
     private final Goal goal;
 
@@ -33,7 +34,9 @@ public class GoalItemContent extends JPanel implements Refreshable
         setOpaque(false);
         setBackground(null);
 
-        add(title, BorderLayout.WEST);
+        JPanel topRow = new JPanel(new BorderLayout());
+        topRow.setOpaque(false);
+        topRow.add(title, BorderLayout.WEST);
         // Make goal title editable with standard copy/paste
         title.setBorder(null);
         title.setOpaque(false);
@@ -57,7 +60,13 @@ public class GoalItemContent extends JPanel implements Refreshable
             }
         });
 
-        add(progress, BorderLayout.EAST);
+        topRow.add(progress, BorderLayout.EAST);
+        add(topRow, BorderLayout.CENTER);
+
+        // Slim custom progress bar under the title row
+        progressBar.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0)); // gap above the bar
+        progressBar.setPreferredSize(new Dimension(0, 6)); // 6px tall bar
+        add(progressBar, BorderLayout.SOUTH);
 
         // Initialize visible text and colors immediately (before first refresh)
         {
@@ -100,6 +109,7 @@ public class GoalItemContent extends JPanel implements Refreshable
         this.addMouseListener(forwardPopup);
         title.addMouseListener(forwardPopup);
         progress.addMouseListener(forwardPopup);
+        progressBar.addMouseListener(forwardPopup);
         // Ensure item icon/text initialize on first render (e.g., on login)
         javax.swing.SwingUtilities.invokeLater(this::refresh);
     }
@@ -124,5 +134,38 @@ public class GoalItemContent extends JPanel implements Refreshable
         progress.setText(
             goal.getComplete().size() + "/" + goal.getTasks().size());
         progress.setForeground(color);
+
+        int total = goal.getTasks().size();
+        int done = goal.getComplete().size();
+        progressBar.setVisible(total > 0);
+        progressBar.setProgress(done, total, color);
+    }
+    private static class SlimBar extends JComponent {
+        private int done = 0;
+        private int total = 1;
+        private Color fill = Color.GREEN;
+
+        void setProgress(int done, int total, Color fill) {
+            this.done = done;
+            this.total = Math.max(1, total);
+            this.fill = fill;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            int w = getWidth();
+            int h = getHeight();
+            // track
+            g2.setColor(ColorScheme.DARKER_GRAY_COLOR);
+            g2.fillRect(0, 0, w, h);
+            // fill
+            int barW = (int) ((done / (double) total) * w);
+            g2.setColor(fill != null ? fill : Color.GREEN);
+            g2.fillRect(0, 0, barW, h);
+            g2.dispose();
+        }
     }
 }
