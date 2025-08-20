@@ -13,7 +13,9 @@ import java.util.function.BiConsumer;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JComponent;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
 import net.runelite.client.ui.ColorScheme;
 
 public class ListItemPanel<T> extends JPanel implements Refreshable
@@ -81,14 +83,7 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
         this.item = item;
 
         if (item instanceof Goal) {
-            setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                new EmptyBorder(4, 2, 4, 2), // minimal outer spacing
-                javax.swing.BorderFactory.createCompoundBorder(
-                    javax.swing.BorderFactory.createLineBorder(java.awt.Color.DARK_GRAY, 1, true), // rounded card outline
-                    new EmptyBorder(2, 4, 2, 4) // minimal inner padding
-                )
-            ));
-            setBackground(ColorScheme.DARKER_GRAY_COLOR);
+            applyGoalCardDefaultStyle();
         } else {
             setBorder(new EmptyBorder(2, 4, 2, 4)); // add horizontal and vertical spacing for tasks
             setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -194,6 +189,12 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
     public ListItemPanel<T> add(Component comp)
     {
         super.add(comp, BorderLayout.CENTER);
+        // For goal cards, strip inner borders from the content to avoid double outlines
+        if (item instanceof Goal && comp instanceof JComponent)
+        {
+            ((JComponent) comp).setBorder(new EmptyBorder(0, 0, 0, 0));
+            ((JComponent) comp).setOpaque(false);
+        }
         addContextMenuListenerRecursive(comp);
         if (clickListenerAdapter != null) addClickListenerRecursive(comp);
         return this;
@@ -208,6 +209,9 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
             {
                 if (e.getButton() == MouseEvent.BUTTON1)
                 {
+                    if (item instanceof Goal) {
+                        applyGoalCardPressedStyle();
+                    }
                     clickListener.accept(e);
                 }
             }
@@ -216,7 +220,7 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
             public void mouseEntered(MouseEvent e)
             {
                 if (item instanceof Goal) {
-                    setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+                    applyGoalCardHoverStyle();
                 }
             }
 
@@ -224,7 +228,19 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
             public void mouseExited(MouseEvent e)
             {
                 if (item instanceof Goal) {
-                    setBackground(ColorScheme.DARKER_GRAY_COLOR);
+                    applyGoalCardDefaultStyle();
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e)
+            {
+                if (item instanceof Goal) {
+                    if (contains(e.getPoint())) {
+                        applyGoalCardHoverStyle();
+                    } else {
+                        applyGoalCardDefaultStyle();
+                    }
                 }
             }
         };
@@ -247,5 +263,33 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
 
     public void onRemovedWithIndex(BiConsumer<T, Integer> removeListener) {
         this.removedWithIndexListener = removeListener;
+    }
+
+    private void applyGoalCardDefaultStyle()
+    {
+        // Outer gap -> subtle drop shadow (bottom/right) -> rounded outline -> inner padding
+        setBorder(javax.swing.BorderFactory.createCompoundBorder(
+            new EmptyBorder(8, 6, 8, 6),
+            javax.swing.BorderFactory.createCompoundBorder(
+                new MatteBorder(2, 2, 4, 4, new Color(0, 0, 0, 60)), // shadow on all sides
+                javax.swing.BorderFactory.createCompoundBorder(
+                    javax.swing.BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1, true),
+                    new EmptyBorder(6, 8, 6, 8)
+                )
+            )
+        ));
+        setBackground(ColorScheme.DARK_GRAY_COLOR);
+    }
+
+    private void applyGoalCardHoverStyle()
+    {
+        // Keep border; just brighten background on hover
+        setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+    }
+
+    private void applyGoalCardPressedStyle()
+    {
+        // Slightly darker than hover to indicate press
+        setBackground(ColorScheme.DARK_GRAY_COLOR);
     }
 }

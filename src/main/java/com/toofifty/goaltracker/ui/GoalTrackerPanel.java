@@ -86,10 +86,28 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
 
         actionBar.left().add(addGoalBtn);
 
+        // Right-side actions: Undo/Redo
+        undoButtonRef = new ActionBarButton("Undo", this::doUndo);
+        redoButtonRef = new ActionBarButton("Redo", this::doRedo);
+        actionBar.right().add(undoButtonRef);
+        actionBar.right().add(redoButtonRef);
+        updateUndoRedoButtons();
+
+        // Wrap the title panel with a subtle bottom separator for visual polish
+        JPanel titleWrapper = new JPanel(new BorderLayout());
+        titleWrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        titleWrapper.add(titlePanel, BorderLayout.CENTER);
+
+        // 1px divider under the header title
+        JPanel headerSeparator = new JPanel();
+        headerSeparator.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        headerSeparator.setPreferredSize(new Dimension(1, 4));
+        titleWrapper.add(headerSeparator, BorderLayout.SOUTH);
+
         JPanel headerContainer = new JPanel(new BorderLayout());
         headerContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        headerContainer.add(titlePanel, BorderLayout.NORTH);
-        headerContainer.add(actionBar, BorderLayout.SOUTH   );
+        headerContainer.add(titleWrapper, BorderLayout.NORTH);
+        headerContainer.add(actionBar, BorderLayout.SOUTH);
 
         goalListPanel = new ListPanel<>(goalManager.getGoals(),
             (goal) -> {
@@ -105,7 +123,7 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
             }
         );
         goalListPanel.setGap(0);
-        goalListPanel.setPlaceholder("Add a new goal using the button above");
+        goalListPanel.setPlaceholder("<html><div style='text-align:center;color:#bfbfbf;padding:8px 0;'>No goals yet.<br/>Click <b>+ Add goal</b> above to create your first one.</div></html>");
 
         mainPanel.add(headerContainer, BorderLayout.NORTH);
         mainPanel.add(goalListPanel, BorderLayout.CENTER);
