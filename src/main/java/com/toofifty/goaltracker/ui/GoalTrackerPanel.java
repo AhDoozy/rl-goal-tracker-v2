@@ -56,11 +56,20 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
 
         // (Removed "+ Add goal" button from the title panel)
 
-        JLabel title = new JLabel();
-        title.setText("Goal Tracker");
+        JLabel title = new JLabel("Goal Tracker v2");
         title.setForeground(Color.WHITE);
         title.setFont(FontManager.getRunescapeBoldFont());
-        titlePanel.add(title, BorderLayout.WEST);
+
+        JLabel author = new JLabel("By: AhDoozy");
+        author.setForeground(Color.LIGHT_GRAY);
+        author.setFont(title.getFont().deriveFont(title.getFont().getSize2D() - 3f));
+
+        JPanel titleTextPanel = new JPanel(new GridLayout(2, 1));
+        titleTextPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        titleTextPanel.add(title);
+        titleTextPanel.add(author);
+
+        titlePanel.add(titleTextPanel, BorderLayout.WEST);
 
         // Action bar (shared style)
         ActionBar actionBar = new ActionBar();
