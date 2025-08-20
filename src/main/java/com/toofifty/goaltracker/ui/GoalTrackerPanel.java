@@ -36,6 +36,7 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     private Consumer<Goal> goalUpdatedListener;
     private Consumer<Task> taskAddedListener;
     private Consumer<Task> taskUpdatedListener;
+    private Goal pendingNewGoal;
 
     @Inject
     public GoalTrackerPanel(GoalTrackerPlugin plugin, GoalManager goalManager)
@@ -68,6 +69,7 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         ActionBarButton addGoalBtn = new ActionBarButton("+ Add goal", () ->
         {
             Goal goal = goalManager.createGoal();
+            pendingNewGoal = goal;
             view(goal);
             if (goalAddedListener != null) goalAddedListener.accept(goal);
             if (goalUpdatedListener != null) goalUpdatedListener.accept(goal);
@@ -130,6 +132,17 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
 
     public void home()
     {
+        // Auto-remove an empty goal created via "+ Add goal" if user backs out without adding tasks
+        if (pendingNewGoal != null)
+        {
+            try {
+                if (pendingNewGoal.getTasks() == null || pendingNewGoal.getTasks().isEmpty()) {
+                    goalManager.getGoals().remove(pendingNewGoal);
+                }
+            } finally {
+                pendingNewGoal = null;
+            }
+        }
         // Clear the GoalTrackerPanel content and switch back to the main panel
         removeAll();
 
