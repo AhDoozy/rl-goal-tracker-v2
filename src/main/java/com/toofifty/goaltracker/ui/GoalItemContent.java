@@ -29,8 +29,9 @@ public class GoalItemContent extends JPanel implements Refreshable
         this.goal = goal;
 
         setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8)); // padding for centered text
-        setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        setOpaque(true);
+        // Let the parent card body paint the background; avoid double fills
+        setOpaque(false);
+        setBackground(null);
 
         add(title, BorderLayout.WEST);
         // Make goal title editable with standard copy/paste
@@ -57,6 +58,16 @@ public class GoalItemContent extends JPanel implements Refreshable
         });
 
         add(progress, BorderLayout.EAST);
+
+        // Initialize visible text and colors immediately (before first refresh)
+        {
+            Color color = STATUS_TO_COLOR.get(goal.getStatus());
+            title.setText(goal.getDescription());
+            title.setForeground(color);
+            title.setCaretColor(color);
+            progress.setText(goal.getComplete().size() + "/" + goal.getTasks().size());
+            progress.setForeground(color);
+        }
 
         plugin.getUiStatusManager().addRefresher(goal, this::refresh);
 

@@ -153,9 +153,9 @@ public class ListTaskPanel extends ListItemPanel<Task>
         addShiftRemoveListenerRecursive(this);
     }
 
-    @Override
     public void refreshMenu()
     {
+        super.refresh();
         popupMenu.removeAll();
         javax.swing.JMenu moveMenu = new javax.swing.JMenu("Move");
         boolean hasMove = false;
@@ -378,6 +378,179 @@ public class ListTaskPanel extends ListItemPanel<Task>
 
     public void setActionHistory(ActionHistory history) {
         this.history = history;
+    }
+
+    /**
+     * Appends Task-specific context menu items.
+     */
+    @Override
+    protected void buildAdditionalMenu()
+    {
+        javax.swing.JMenu moveMenu = new javax.swing.JMenu("Move");
+        boolean hasMove = false;
+        // Rewire generic move actions to include ActionHistory entries
+        if (!list.isFirst(item)) {
+            for (var l : moveUp.getActionListeners()) moveUp.removeActionListener(l);
+            moveUp.addActionListener(e -> {
+                int oldIndex = list.indexOf(item);
+                int newIndex = Math.max(0, oldIndex - 1);
+                list.moveUp(item);
+                if (history != null) {
+                    history.push(new ReorderTaskAction(list, item, oldIndex, newIndex));
+                }
+                refreshParentList();
+            });
+            moveMenu.add(moveUp);
+            hasMove = true;
+        }
+        if (!list.isLast(item)) {
+            for (var l : moveDown.getActionListeners()) moveDown.removeActionListener(l);
+            moveDown.addActionListener(e -> {
+                int oldIndex = list.indexOf(item);
+                int newIndex = Math.min(list.size() - 1, oldIndex + 1);
+                list.moveDown(item);
+                if (history != null) {
+                    history.push(new ReorderTaskAction(list, item, oldIndex, newIndex));
+                }
+                refreshParentList();
+            });
+            moveMenu.add(moveDown);
+            hasMove = true;
+        }
+        if (!list.isFirst(item)) {
+            for (var l : moveToTop.getActionListeners()) moveToTop.removeActionListener(l);
+            moveToTop.addActionListener(e -> {
+                int oldIndex = list.indexOf(item);
+                list.moveToTop(item);
+                if (history != null) {
+                    history.push(new ReorderTaskAction(list, item, oldIndex, 0));
+                }
+                refreshParentList();
+            });
+            moveMenu.add(moveToTop);
+            hasMove = true;
+        }
+        if (!list.isLast(item)) {
+            for (var l : moveToBottom.getActionListeners()) moveToBottom.removeActionListener(l);
+            moveToBottom.addActionListener(e -> {
+                int oldIndex = list.indexOf(item);
+                list.moveToBottom(item);
+                if (history != null) {
+                    history.push(new ReorderTaskAction(list, item, oldIndex, list.size() - 1));
+                }
+                refreshParentList();
+            });
+            moveMenu.add(moveToBottom);
+            hasMove = true;
+        }
+        if (hasMove) {
+            popupMenu.add(moveMenu);
+        }
+
+        // Indent / Unindent
+        var previousItem = list.getPreviousItem(item);
+        if (item.isNotFullyIndented() && previousItem != null && previousItem.getIndentLevel() >= item.getIndentLevel()) {
+            popupMenu.add(indentItem);
+        }
+        if (item.isIndented()) {
+            popupMenu.add(unindentItem);
+        }
+
+        // Toggle Completed/Incomplete for this task and its descendants
+        String toggleLabel = "Mark as " + (item.getStatus() == Status.COMPLETED ? "Incomplete" : "Completed");
+        JMenuItem toggleStatusItem = new JMenuItem(toggleLabel);
+        toggleStatusItem.addActionListener(e -> {
+            Status newStatus = (item.getStatus() == Status.COMPLETED ? Status.NOT_STARTED : Status.COMPLETED);
+            java.util.List<Task> affected = new java.util.ArrayList<>();
+            java.util.List<Status> oldStatuses = new java.util.ArrayList<>();
+            int index = list.indexOf(item);
+            int baseIndent = item.getIndentLevel();
+            affected.add(item);
+            oldStatuses.add(item.getStatus());
+            for (int i = index + 1; i < list.size(); i++) {
+                Task child = list.get(i);
+                if (child.getIndentLevel() <= baseIndent) break;
+                affected.add(child);
+                oldStatuses.add(child.getStatus());
+            }
+            ActionHistory.Action act = new ActionHistory.Action() {
+                @Override public void undo() { for (int i = 0; i < affected.size(); i++) affected.get(i).setStatus(oldStatuses.get(i)); }
+                @Override public void redo() { for (Task t : affected) t.setStatus(newStatus); }
+            };
+            if (history != null) { act.redo(); history.push(act); }
+            else { for (Task t : affected) t.setStatus(newStatus); }
+            if (taskContent != null) taskContent.refresh();
+            refreshParentList();
+        });
+        popupMenu.add(toggleStatusItem);
+
+        // Quest pre-reqs (if available)
+        if (item instanceof com.toofifty.goaltracker.models.task.QuestTask) {
+            com.toofifty.goaltracker.models.task.QuestTask questTask = (com.toofifty.goaltracker.models.task.QuestTask) item;
+            int baseIndent = item.getIndentLevel();
+            java.util.Set<String> existingKeys = new java.util.HashSet<>();
+            int parentIndex = list.indexOf(item);
+            for (int i = parentIndex + 1; i < list.size(); i++) {
+                var child = list.get(i);
+                if (child.getIndentLevel() <= baseIndent) break;
+                existingKeys.add(child.getClass().getName() + "|" + child.toString());
+            }
+            var rawPrereqs = QuestRequirements.getRequirements(questTask.getQuest(), baseIndent + 1);
+            java.util.List<com.toofifty.goaltracker.models.task.Task> missingPrereqs = new java.util.ArrayList<>();
+            if (rawPrereqs != null) {
+                for (com.toofifty.goaltracker.models.task.Task p : rawPrereqs) {
+                    String key = p.getClass().getName() + "|" + p.toString();
+                    if (!existingKeys.contains(key)) missingPrereqs.add(p);
+                }
+            }
+            if (!missingPrereqs.isEmpty()) {
+                JMenuItem prereqItem = new JMenuItem("Add pre-reqs");
+                prereqItem.addActionListener(e -> {
+                    var raw = QuestRequirements.getRequirements(questTask.getQuest(), baseIndent + 1);
+                    if (raw != null) {
+                        java.util.Set<String> currentKeys = new java.util.HashSet<>();
+                        int pIndex = list.indexOf(item);
+                        for (int i = pIndex + 1; i < list.size(); i++) {
+                            var child = list.get(i);
+                            if (child.getIndentLevel() <= baseIndent) break;
+                            currentKeys.add(child.getClass().getName() + "|" + child.toString());
+                        }
+                        java.util.List<com.toofifty.goaltracker.models.task.Task> filtered = new java.util.ArrayList<>();
+                        for (com.toofifty.goaltracker.models.task.Task t : raw) {
+                            String key = t.getClass().getName() + "|" + t.toString();
+                            if (!currentKeys.contains(key)) filtered.add(t);
+                        }
+                        if (!filtered.isEmpty()) {
+                            int insertIndex = list.indexOf(item);
+                            for (com.toofifty.goaltracker.models.task.Task prereq : filtered) {
+                                list.add(insertIndex + 1, prereq);
+                                insertIndex++;
+                            }
+                            refreshParentList();
+                        }
+                    }
+                });
+                popupMenu.add(prereqItem);
+            }
+        }
+
+        // Rewire Remove to cascade children and update label
+        for (var l : removeItem.getActionListeners()) removeItem.removeActionListener(l);
+        removeItem.addActionListener(e -> {
+            int removedIndex = list.indexOf(item);
+            int baseIndent = item.getIndentLevel();
+            while (removedIndex + 1 < list.size() && list.get(removedIndex + 1).getIndentLevel() > baseIndent) {
+                list.remove(list.get(removedIndex + 1));
+            }
+            list.remove(item);
+            if (this.removedWithIndexListener != null) this.removedWithIndexListener.accept(item, removedIndex);
+            if (this.removedListener != null) this.removedListener.accept(item);
+            refreshParentList();
+        });
+        removeItem.setText("<html>Remove <span style='font-size: smaller; color: gray;'>(Shift+Left Click)</span></html>");
+        // Ensure remove is at the bottom: remove and re-add it
+        popupMenu.remove(removeItem);
+        popupMenu.add(removeItem);
     }
 
     private void refreshParentList()

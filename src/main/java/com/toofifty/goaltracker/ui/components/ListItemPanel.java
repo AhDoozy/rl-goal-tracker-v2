@@ -36,6 +36,9 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
 
     private MouseAdapter clickListenerAdapter;
 
+    // Inner face of the goal card; only this area changes color on hover/press
+    private JPanel cardBody;
+
     private void addClickListenerRecursive(Component c)
     {
         if (clickListenerAdapter == null) return;
@@ -82,6 +85,12 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
         this.list = list;
         this.item = item;
 
+        // Create inner card surface to isolate hover/press background changes
+        cardBody = new JPanel(new BorderLayout());
+        cardBody.setOpaque(true);
+        // Add the cardBody as the main content area
+        super.add(cardBody, BorderLayout.CENTER);
+
         if (item instanceof Goal) {
             applyGoalCardDefaultStyle();
         } else {
@@ -127,73 +136,47 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
     }
 
     @Override
-    public void setBackground(Color bg)
+    public void add(Component comp, Object constraints)
     {
-        super.setBackground(bg);
-        for (Component component : getComponents()) {
-            component.setBackground(bg);
+        if (item instanceof Goal)
+        {
+            cardBody.add(comp, BorderLayout.CENTER);
+            // For goal cards, strip inner borders from the content to avoid double outlines
+            if (comp instanceof JComponent)
+            {
+                ((JComponent) comp).setBorder(new EmptyBorder(0, 0, 0, 0));
+            }
+            addContextMenuListenerRecursive(comp);
+            if (clickListenerAdapter != null) addClickListenerRecursive(comp);
+            return;
         }
+        super.add(comp, constraints);
     }
 
     @Override
-    public void refresh()
+    public Component add(String name, Component comp)
     {
-        refreshMenu();
-
-        for (Component component : getComponents()) {
-            if (component instanceof Refreshable) {
-                ((Refreshable) component).refresh();
+        if (item instanceof Goal)
+        {
+            cardBody.add(comp, BorderLayout.CENTER);
+            if (comp instanceof JComponent)
+            {
+                ((JComponent) comp).setBorder(new EmptyBorder(0, 0, 0, 0));
             }
+            addContextMenuListenerRecursive(comp);
+            if (clickListenerAdapter != null) addClickListenerRecursive(comp);
+            return comp;
         }
-    }
-
-    public void refreshMenu()
-    {
-        popupMenu.removeAll();
-        if (!list.isFirst(item)) {
-            popupMenu.add(moveUp);
-        }
-        if (!list.isLast(item)) {
-            popupMenu.add(moveDown);
-        }
-        if (!list.isFirst(item)) {
-            popupMenu.add(moveToTop);
-        }
-        if (!list.isLast(item)) {
-            popupMenu.add(moveToBottom);
-        }
-        popupMenu.add(removeItem);
-
-        if (item instanceof Goal) {
-            JMenuItem markAllComplete = new JMenuItem("Mark all as completed");
-            JMenuItem markAllIncomplete = new JMenuItem("Mark all as incomplete");
-
-            markAllComplete.addActionListener(e -> {
-                Goal goal = (Goal) item;
-                goal.setAllTasksCompleted(true);
-                refresh();
-            });
-
-            markAllIncomplete.addActionListener(e -> {
-                Goal goal = (Goal) item;
-                goal.setAllTasksCompleted(false);
-                refresh();
-            });
-
-            popupMenu.addSeparator();
-            popupMenu.add(markAllComplete);
-            popupMenu.add(markAllIncomplete);
-        }
+        return super.add(name, comp);
     }
 
     public ListItemPanel<T> add(Component comp)
     {
-        super.add(comp, BorderLayout.CENTER);
+        cardBody.add(comp, BorderLayout.CENTER);
         // For goal cards, strip inner borders from the content to avoid double outlines
         if (item instanceof Goal && comp instanceof JComponent)
         {
             ((JComponent) comp).setBorder(new EmptyBorder(0, 0, 0, 0));
-            ((JComponent) comp).setOpaque(false);
         }
         addContextMenuListenerRecursive(comp);
         if (clickListenerAdapter != null) addClickListenerRecursive(comp);
@@ -267,29 +250,108 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
 
     private void applyGoalCardDefaultStyle()
     {
-        // Outer gap -> subtle drop shadow (bottom/right) -> rounded outline -> inner padding
+        // Outer spacing + shadow on the container panel
         setBorder(javax.swing.BorderFactory.createCompoundBorder(
             new EmptyBorder(8, 6, 8, 6),
-            javax.swing.BorderFactory.createCompoundBorder(
-                new MatteBorder(2, 2, 4, 4, new Color(0, 0, 0, 60)), // shadow on all sides
-                javax.swing.BorderFactory.createCompoundBorder(
-                    javax.swing.BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1, true),
-                    new EmptyBorder(6, 8, 6, 8)
-                )
-            )
+            new MatteBorder(2, 2, 4, 4, new Color(0, 0, 0, 60)) // shadow on all sides
         ));
-        setBackground(ColorScheme.DARK_GRAY_COLOR);
+        setBackground(ColorScheme.DARK_GRAY_COLOR); // keep outer area stable
+
+        // Inner card face: rounded outline + inner padding
+        if (cardBody != null)
+        {
+            cardBody.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1, true),
+                new EmptyBorder(6, 8, 6, 8)
+            ));
+            cardBody.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        }
     }
 
     private void applyGoalCardHoverStyle()
     {
-        // Keep border; just brighten background on hover
-        setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+        if (cardBody != null)
+        {
+            cardBody.setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+        }
     }
 
     private void applyGoalCardPressedStyle()
     {
-        // Slightly darker than hover to indicate press
-        setBackground(ColorScheme.DARK_GRAY_COLOR);
+        if (cardBody != null)
+        {
+            cardBody.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        }
+    }
+
+    @Override
+    public void refresh()
+    {
+        // Refresh the context menu
+        popupMenu.removeAll();
+        if (!list.isFirst(item)) {
+            popupMenu.add(moveUp);
+        }
+        if (!list.isLast(item)) {
+            popupMenu.add(moveDown);
+        }
+        if (!list.isFirst(item)) {
+            popupMenu.add(moveToTop);
+        }
+        if (!list.isLast(item)) {
+            popupMenu.add(moveToBottom);
+        }
+        popupMenu.add(removeItem);
+
+        buildAdditionalMenu();
+
+        // Refresh all descendants that implement Refreshable
+        for (Component component : getComponents()) {
+            refreshDescendants(component);
+        }
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Hook for subclasses to append extra context‑menu items.
+     * Base implementation adds Goal‑specific actions only.
+     */
+    protected void buildAdditionalMenu()
+    {
+        if (item instanceof Goal)
+        {
+            JMenuItem markAllComplete = new JMenuItem("Mark all as completed");
+            JMenuItem markAllIncomplete = new JMenuItem("Mark all as incomplete");
+
+            markAllComplete.addActionListener(e -> {
+                Goal goal = (Goal) item;
+                goal.setAllTasksCompleted(true);
+                refresh();
+            });
+
+            markAllIncomplete.addActionListener(e -> {
+                Goal goal = (Goal) item;
+                goal.setAllTasksCompleted(false);
+                refresh();
+            });
+
+            popupMenu.addSeparator();
+            popupMenu.add(markAllComplete);
+            popupMenu.add(markAllIncomplete);
+        }
+        // Non‑Goal rows (e.g., Tasks) should add their own items in subclasses like ListTaskPanel
+    }
+
+    private void refreshDescendants(Component c)
+    {
+        if (c instanceof Refreshable) {
+            ((Refreshable) c).refresh();
+        }
+        if (c instanceof java.awt.Container) {
+            for (Component child : ((java.awt.Container) c).getComponents()) {
+                refreshDescendants(child);
+            }
+        }
     }
 }

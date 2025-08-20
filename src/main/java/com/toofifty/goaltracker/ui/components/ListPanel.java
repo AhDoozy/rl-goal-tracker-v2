@@ -132,7 +132,7 @@ public class ListPanel<T> extends JScrollPane implements Refreshable
     {
         for (Component component : listPanel.getComponents()) {
             if (component instanceof ListItemPanel) {
-                ((ListItemPanel<?>) component).refreshMenu();
+                ((Refreshable) component).refresh();
             }
         }
     }
