@@ -45,6 +45,6 @@ public interface GoalTrackerConfig extends Config
     @Alpha
     default Color completionMessageColor()
     {
-        return new Color(0xFF16ABE5, true);
+        return new Color(0xF227A509, true);
     }
 }

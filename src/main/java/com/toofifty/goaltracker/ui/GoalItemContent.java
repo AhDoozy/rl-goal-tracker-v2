@@ -100,6 +100,16 @@ public class GoalItemContent extends JPanel implements Refreshable
         this.addMouseListener(forwardPopup);
         title.addMouseListener(forwardPopup);
         progress.addMouseListener(forwardPopup);
+        // Ensure item icon/text initialize on first render (e.g., on login)
+        javax.swing.SwingUtilities.invokeLater(this::refresh);
+    }
+
+    @Override
+    public void addNotify()
+    {
+        super.addNotify();
+        // In case construction happened before UI was realized, refresh when shown
+        javax.swing.SwingUtilities.invokeLater(this::refresh);
     }
 
     @Override

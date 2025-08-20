@@ -19,6 +19,10 @@
 - Added manual completion toggling for tasks created from presets, allowing users to right-click and mark them complete/incomplete just like quick-added tasks.
 - Added customizable color setting for task completion messages shown in the chatbox.
 - Implemented automatic goal status checking upon login to mark goals as completed if requirements are already met.
+- Context menu entries now rebuilt dynamically right before opening to ensure the latest state.
+- Task list panel context menus reorganized with a **Move** submenu and cascading complete/incomplete toggle that applies to children.
+- Initial refresh calls for Task and Goal content so icons/text render correctly on login.
+- Automatic ancestor `ListPanel` refresh propagation to keep Home goal list in sync when tasks change.
 
 ### Changed
 - Pre-req button made more compact (~25% smaller).
@@ -57,6 +61,9 @@
     options.
   - Cursor/hover detection improved on home goal list: listeners now attach recursively to all child  
     components for accurate selection and highlighting.
+- Goal cards now use a lighter fill with a full shadow around borders, and hover/press only affect the card face.
+- Header divider under “Goal Tracker” made thicker (4px) for stronger separation.
+- Right-click menus refactored so Tasks build their own menu and Goals build theirs, preventing duplicate/unusable items.
 
 ### Fixed
 - Home panel Undo/Redo buttons removed; these controls now exist only in Goal view.
@@ -67,3 +74,6 @@
 - Goal name input now fully supports keyboard shortcuts (Ctrl/Cmd+C, V, X, A, Insert/Delete variants) and right-click context menu for copy/paste across all platforms.
 - Empty goals (0/0 tasks) created via **+ Add goal** are now automatically removed when backing out without adding tasks, preventing clutter in saved goal lists.
 - Fixed visual refresh issue where quest task statuses didn’t show correctly on login unless re-entering the goal.
+- Fixed child task refresh issues after parent complete/incomplete cascades by recursively refreshing all descendants.
+- Fixed blank panel issue when switching from Home to Goal view by only using inner card body for Goal rows.
+- Fixed completion chat message not appearing; now delivered as a proper `GAMEMESSAGE` with customizable config color.

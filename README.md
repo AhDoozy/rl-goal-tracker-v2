@@ -18,6 +18,11 @@
 - 👆 Hover states for better visual feedback
 - 📋 New context menu organization for streamlined interaction
 - 🔍 Search toggle improvements for easier task searching
+- 📂 Task right‑click menu now includes a grouped **Move** submenu and cascading complete/incomplete toggle that applies to children.
+- 🖼️ Goal cards redesigned with lighter fills, full shadows, and hover/press effects only on the card face.
+- 📏 Thicker header divider under “Goal Tracker” for clearer separation.
+- 🔄 Automatic refresh propagation so Home goals update instantly when tasks change.
+- 💬 Completion chat messages delivered as proper Game messages with configurable colors.
 
 ---
 
@@ -31,6 +36,8 @@
 - 🖱️ Improved context menus with better usability
 - 🎯 Enhanced cursor and hover detection accuracy
 - 📋 Copy and paste support in the goal name input field
+- 🔄 Context menu entries rebuilt dynamically before opening to always reflect the latest state.
+- 🖼️ Task and goal content now force an initial refresh so icons and text render correctly at login.
 
 ---
 ## 🐛 Fixes
@@ -43,6 +50,9 @@
 - ⌨️ Keyboard shortcut fixes and enhancements
 - 🗑️ Automatic removal of empty goals to keep lists tidy
 - 🔄 Visual refresh issue resolved on login
+- ✅ Fixed child task refresh issues by recursively refreshing all descendants.
+- 🗂️ Fixed blank panel issue when switching from Home to Goal view.
+- 💬 Fixed completion chat message not appearing on task completion.
 
 ---
 
