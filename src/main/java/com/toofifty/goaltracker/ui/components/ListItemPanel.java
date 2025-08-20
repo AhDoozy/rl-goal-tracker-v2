@@ -32,6 +32,48 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
     protected Consumer<T> removedListener;
     protected BiConsumer<T, Integer> removedWithIndexListener;
 
+    private MouseAdapter clickListenerAdapter;
+
+    private void addClickListenerRecursive(Component c)
+    {
+        if (clickListenerAdapter == null) return;
+        c.addMouseListener(clickListenerAdapter);
+        if (c instanceof java.awt.Container)
+        {
+            for (Component child : ((java.awt.Container) c).getComponents())
+            {
+                addClickListenerRecursive(child);
+            }
+        }
+    }
+
+    private void addContextMenuListenerRecursive(Component c)
+    {
+        c.addMouseListener(contextMenuListener);
+        if (c instanceof java.awt.Container)
+        {
+            for (Component child : ((java.awt.Container) c).getComponents())
+            {
+                addContextMenuListenerRecursive(child);
+            }
+        }
+    }
+
+    private final MouseAdapter contextMenuListener = new MouseAdapter()
+    {
+        private void maybeShow(MouseEvent e)
+        {
+            if (!(e.isPopupTrigger() || javax.swing.SwingUtilities.isRightMouseButton(e)))
+            {
+                return;
+            }
+            popupMenu.show((Component) e.getSource(), e.getX(), e.getY());
+        }
+
+        @Override public void mousePressed(MouseEvent e) { maybeShow(e); }
+        @Override public void mouseReleased(MouseEvent e) { maybeShow(e); }
+    };
+
     public ListItemPanel(ReorderableList<T> list, T item)
     {
         super(new BorderLayout());
@@ -71,6 +113,11 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
         popupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         setComponentPopupMenu(popupMenu);
+        // Also show context menu on press/release to handle platform differences
+        this.addMouseListener(contextMenuListener);
+        // Ensure popup and click listeners cover all descendants initially
+        addContextMenuListenerRecursive(this);
+        setOpaque(true);
     }
 
     @Override
@@ -136,17 +183,20 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
     public ListItemPanel<T> add(Component comp)
     {
         super.add(comp, BorderLayout.CENTER);
+        addContextMenuListenerRecursive(comp);
+        if (clickListenerAdapter != null) addClickListenerRecursive(comp);
         return this;
     }
 
     public void onClick(Consumer<MouseEvent> clickListener)
     {
-        addMouseListener(new MouseAdapter()
+        clickListenerAdapter = new MouseAdapter()
         {
             @Override
             public void mousePressed(MouseEvent e)
             {
-                if (e.getButton() == MouseEvent.BUTTON1) {
+                if (e.getButton() == MouseEvent.BUTTON1)
+                {
                     clickListener.accept(e);
                 }
             }
@@ -162,7 +212,14 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
             {
                 setBackground(ColorScheme.DARK_GRAY_COLOR);
             }
-        });
+        };
+
+        // Attach to this panel and all current children
+        addMouseListener(clickListenerAdapter);
+        addClickListenerRecursive(this);
+
+        // Optional: use a hand cursor to indicate clickability
+        setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
     }
 
     public void onRemoved(Consumer<T> removeListener) {

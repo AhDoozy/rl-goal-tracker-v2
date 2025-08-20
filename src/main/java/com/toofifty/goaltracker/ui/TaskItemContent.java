@@ -9,6 +9,8 @@ import com.toofifty.goaltracker.utils.QuestRequirements;
 import java.util.List;
 
 import com.toofifty.goaltracker.ui.components.ListPanel;
+import com.toofifty.goaltracker.ui.components.ListItemPanel;
+import javax.swing.SwingUtilities;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -20,6 +22,7 @@ import com.toofifty.goaltracker.models.ActionHistory;
 import com.toofifty.goaltracker.models.ToggleCompleteAction;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import com.toofifty.goaltracker.models.enums.Status;
 
 public class TaskItemContent extends JPanel implements Refreshable
 {
@@ -51,33 +54,52 @@ public class TaskItemContent extends JPanel implements Refreshable
         plugin.getUiStatusManager().addRefresher(task, this::refresh);
 
         // Right-click to toggle completion with ActionHistory
-        titleLabel.addMouseListener(new MouseAdapter()
+        MouseAdapter contextMenuListener = new MouseAdapter()
         {
-            private void showMenu(MouseEvent e)
+            private void showMenuIfNeeded(MouseEvent e)
             {
-                if (!e.isPopupTrigger()) return;
+                if (!(e.isPopupTrigger() || javax.swing.SwingUtilities.isRightMouseButton(e)))
+                {
+                    return;
+                }
+                // Prefer the parent ListItemPanel context menu (move up/down/remove, etc.)
+                Component src = (Component) e.getSource();
+                JComponent listItem = (JComponent) SwingUtilities.getAncestorOfClass(ListItemPanel.class, src);
+                if (listItem != null && listItem.getComponentPopupMenu() != null)
+                {
+                    Point p = SwingUtilities.convertPoint(src, e.getPoint(), listItem);
+                    listItem.getComponentPopupMenu().show(listItem, p.x, p.y);
+                    return;
+                }
 
-                boolean currentlyComplete = "COMPLETED".equals(task.getStatus().toString());
+                // Fallback: show simple toggle menu if no parent popup menu is available
+                boolean currentlyComplete = task.getStatus() == Status.COMPLETED;
                 String label = currentlyComplete ? "Mark as Incomplete" : "Mark as Completed";
 
                 JPopupMenu menu = new JPopupMenu();
                 JMenuItem toggle = new JMenuItem(label);
                 toggle.addActionListener(a -> {
                     ToggleCompleteAction act = new ToggleCompleteAction(task, currentlyComplete, !currentlyComplete);
-                    act.redo(); // apply immediately
+                    act.redo();
                     if (actionHistory != null)
                     {
-                        actionHistory.push(act); // record for undo/redo
+                        actionHistory.push(act);
                     }
                     plugin.getUiStatusManager().refresh(goal);
                 });
                 menu.add(toggle);
-                menu.show(titleLabel, e.getX(), e.getY());
+                Component invoker = (Component) e.getSource();
+                menu.show(invoker, e.getX(), e.getY());
             }
 
-            @Override public void mousePressed(MouseEvent e) { showMenu(e); }
-            @Override public void mouseReleased(MouseEvent e) { showMenu(e); }
-        });
+            @Override public void mousePressed(MouseEvent e) { showMenuIfNeeded(e); }
+            @Override public void mouseReleased(MouseEvent e) { showMenuIfNeeded(e); }
+        };
+
+        // Attach listener to multiple components to make right-click reliable across platforms
+        this.addMouseListener(contextMenuListener);
+        titleLabel.addMouseListener(contextMenuListener);
+        iconLabel.addMouseListener(contextMenuListener);
     }
 
     public void setActionHistory(ActionHistory history)
