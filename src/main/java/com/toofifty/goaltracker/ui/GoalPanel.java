@@ -11,6 +11,8 @@ import com.toofifty.goaltracker.models.task.Task;
 import com.toofifty.goaltracker.ui.components.EditableInput;
 import com.toofifty.goaltracker.ui.components.ListPanel;
 import com.toofifty.goaltracker.ui.components.ListTaskPanel;
+import com.toofifty.goaltracker.ui.components.ActionBar;
+import com.toofifty.goaltracker.ui.components.ActionBarButton;
 import javax.swing.*;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.JTextComponent;
@@ -34,8 +36,8 @@ public class GoalPanel extends JPanel implements Refreshable
     private Consumer<Task> taskUpdatedListener;
 
     private final ActionHistory actionHistory = new ActionHistory();
-    private JButton undoButton;
-    private JButton redoButton;
+    private ActionBarButton undoButton;
+    private ActionBarButton redoButton;
 
     GoalPanel(GoalTrackerPlugin plugin, Goal goal, Runnable closeListener)
     {
@@ -49,32 +51,18 @@ public class GoalPanel extends JPanel implements Refreshable
         headerPanel.setBorder(new EmptyBorder(0, 0, 8, 0));
         add(headerPanel, BorderLayout.NORTH);
 
-        // Goal List Action Bar: Back, Undo, Redo
-        JPanel goalListActionBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        JButton backButton = new JButton("Back");
-        undoButton = new JButton("Undo");
-        redoButton = new JButton("Redo");
+        // Goal List Action Bar: Back (left), Undo/Redo (right)
+        ActionBar actionBar = new ActionBar();
 
-        Font smallFont = backButton.getFont().deriveFont(Font.PLAIN, backButton.getFont().getSize() - 2f);
-        Dimension smallSize = new Dimension(65, 22);
+        ActionBarButton backButton = new ActionBarButton("Back", closeListener::run);
+        undoButton = new ActionBarButton("Undo", this::doUndo);
+        redoButton = new ActionBarButton("Redo", this::doRedo);
 
-        backButton.setFont(smallFont);
-        undoButton.setFont(smallFont);
-        redoButton.setFont(smallFont);
+        actionBar.left().add(backButton);
+        actionBar.right().add(undoButton);
+        actionBar.right().add(redoButton);
 
-        backButton.setPreferredSize(smallSize);
-        undoButton.setPreferredSize(smallSize);
-        redoButton.setPreferredSize(smallSize);
-
-        backButton.addActionListener(e -> closeListener.run());
-        undoButton.addActionListener(e -> doUndo());
-        redoButton.addActionListener(e -> doRedo());
-
-        goalListActionBar.add(backButton);
-        goalListActionBar.add(undoButton);
-        goalListActionBar.add(redoButton);
-        goalListActionBar.setBorder(new EmptyBorder(0, 0, 10, 0)); // add spacing below
-        headerPanel.add(goalListActionBar, BorderLayout.NORTH);
+        headerPanel.add(actionBar, BorderLayout.NORTH);
 
         updateUndoRedoButtons();
 

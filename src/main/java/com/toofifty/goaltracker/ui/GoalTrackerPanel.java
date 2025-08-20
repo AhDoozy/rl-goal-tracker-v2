@@ -5,9 +5,10 @@ import com.toofifty.goaltracker.GoalTrackerPlugin;
 import com.toofifty.goaltracker.models.Goal;
 import com.toofifty.goaltracker.models.UndoStack;
 import com.toofifty.goaltracker.models.task.Task;
+import com.toofifty.goaltracker.ui.components.ActionBar;
+import com.toofifty.goaltracker.ui.components.ActionBarButton;
 import com.toofifty.goaltracker.ui.components.ListItemPanel;
 import com.toofifty.goaltracker.ui.components.ListPanel;
-import com.toofifty.goaltracker.ui.components.TextButton;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
@@ -28,8 +29,8 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     private final GoalTrackerPlugin plugin;
     private final GoalManager goalManager;
     private final UndoStack<Goal> undoStack = new UndoStack<>();
-    private TextButton undoButtonRef;
-    private TextButton redoButtonRef;
+    private ActionBarButton undoButtonRef;
+    private ActionBarButton redoButtonRef;
     private GoalPanel goalPanel;
     private Consumer<Goal> goalAddedListener;
     private Consumer<Goal> goalUpdatedListener;
@@ -60,43 +61,33 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         title.setFont(FontManager.getRunescapeBoldFont());
         titlePanel.add(title, BorderLayout.WEST);
 
-        // New action bar below the title
-        JPanel actionBar = new JPanel(new BorderLayout());
-        actionBar.setBorder(new EmptyBorder(6, 10, 6, 10));
-        actionBar.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        // Action bar (shared style)
+        ActionBar actionBar = new ActionBar();
 
-        JPanel actionsLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        actionsLeft.setOpaque(true);
-        actionsLeft.setBackground(ColorScheme.DARK_GRAY_COLOR);
-
-        TextButton addGoalBtn = new TextButton("+ Add goal",
-            e -> {
-                Goal goal = goalManager.createGoal();
-                view(goal);
-
-                if (Objects.nonNull(this.goalAddedListener)) this.goalAddedListener.accept(goal);
-                if (Objects.nonNull(this.goalUpdatedListener)) this.goalUpdatedListener.accept(goal);
-            }
-        ).narrow();
-
-        TextButton moveBtn = new TextButton("Move", e -> {}).narrow();
+        // Left-side actions
+        ActionBarButton addGoalBtn = new ActionBarButton("+ Add goal", () ->
+        {
+            Goal goal = goalManager.createGoal();
+            view(goal);
+            if (goalAddedListener != null) goalAddedListener.accept(goal);
+            if (goalUpdatedListener != null) goalUpdatedListener.accept(goal);
+        });
+        ActionBarButton moveBtn = new ActionBarButton("Move", () -> {});
         moveBtn.setEnabled(false);
         moveBtn.setToolTipText("Coming soon");
 
-        TextButton bulkEditBtn = new TextButton("Bulk Edit", e -> {}).narrow();
+        ActionBarButton bulkEditBtn = new ActionBarButton("Bulk Edit", () -> {});
         bulkEditBtn.setEnabled(false);
         bulkEditBtn.setToolTipText("Coming soon");
 
-        actionsLeft.add(addGoalBtn);
-        actionsLeft.add(moveBtn);
-        actionsLeft.add(bulkEditBtn);
-        actionBar.add(actionsLeft, BorderLayout.WEST);
+        actionBar.left().add(addGoalBtn);
+        actionBar.left().add(moveBtn);
+        actionBar.left().add(bulkEditBtn);
 
-        // Stack title and action bar into a single header container
         JPanel headerContainer = new JPanel(new BorderLayout());
         headerContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
         headerContainer.add(titlePanel, BorderLayout.NORTH);
-        headerContainer.add(actionBar, BorderLayout.SOUTH);
+        headerContainer.add(actionBar, BorderLayout.SOUTH   );
 
         goalListPanel = new ListPanel<>(goalManager.getGoals(),
             (goal) -> {
@@ -139,10 +130,21 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
 
     public void home()
     {
+        // Clear the GoalTrackerPanel content and switch back to the main panel
         removeAll();
-        add(mainPanel, BorderLayout.CENTER);
+
+        // Rebuild the list BEFORE attaching the main panel to ensure layout has components
         goalListPanel.tryBuildList();
         goalListPanel.refresh();
+
+        // Make sure the list is the CENTER of the main panel (in case layout got disturbed)
+        mainPanel.remove(goalListPanel);
+        mainPanel.add(goalListPanel, BorderLayout.CENTER);
+
+        // Attach main panel and validate
+        add(mainPanel, BorderLayout.CENTER);
+        mainPanel.revalidate();
+        mainPanel.repaint();
 
         revalidate();
         repaint();

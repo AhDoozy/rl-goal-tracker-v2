@@ -17,6 +17,8 @@
 
 ### Added
 - Right-click menu option **Add pre-reqs** for quest tasks with prerequisites. Automatically inserts missing prerequisites as subtasks with proper indentation and prevents duplicates.
+- New `ActionBar` and `ActionBarButton` UI components introduced for consistent toolbar styling across panels.
+- Cursor hover state and hand cursor indicator for goal list items to improve usability.
 
 ### Changed
 - Right-click context menu reorganized: Move actions grouped under a **Move** submenu; Remove action now labeled as **Remove (Shift+Left Click)**.
@@ -34,3 +36,17 @@
 - Remove menu option enhanced to also delete all indented child tasks when removing a parent.
 - Remove menu label updated so the "(Shift+Left Click)" hint displays smaller and in gray.
 - Home view updated: "Goal Tracker" title moved to its own header, with a new action bar beneath it containing **+ Add goal**, **Move**, and **Bulk Edit** buttons (the latter two are placeholders marked "Coming soon").
+- Home panel action bar refactored to use new `ActionBar` and `ActionBarButton` components for consistent styling.
+- Goal view header updated to use unified `ActionBar` with Back (left) and Undo/Redo (right) buttons.
+- ActionBar now includes a center spacer to properly separate left and right button groups.
+- Right-click context menus fixed to reliably open across platforms (Windows, macOS, Linux).
+- Task right-click now defaults to showing full ListItemPanel menu (move, remove, etc.), with fallback to toggle-only menu if no parent menu exists.
+- Goal item context menus updated to forward right-clicks to parent ListItemPanel menus for consistent options.
+- Cursor/hover detection improved on home goal list: listeners now attach recursively to all child components for accurate selection and highlighting.
+
+### Fixed
+- Home panel Undo/Redo buttons removed; these controls now exist only in Goal view.
+- ActionBarButton painting fixed: clears background correctly, text always drawn on top, and hover state no longer causes overlapping artifacts.
+- GoalTrackerPanel `home()` method fixed so returning from Goal view refreshes and displays the goal list instead of a blank panel.
+- ListPanel `refresh()` updated to rebuild list before refreshing children, preventing stale or empty views.
+- Improved accuracy of mouse selection in home goal list; click/hover listeners now consistently cover the entire item area.

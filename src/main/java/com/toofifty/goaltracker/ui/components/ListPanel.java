@@ -78,7 +78,10 @@ public class ListPanel<T> extends JScrollPane implements Refreshable
     @Override
     public void refresh()
     {
-        // refresh all children
+        // Rebuild the list first in case the underlying data changed
+        tryBuildList();
+
+        // Then refresh all children
         for (Component component : listPanel.getComponents()) {
             if (component instanceof Refreshable) {
                 ((Refreshable) component).refresh();
@@ -96,14 +99,12 @@ public class ListPanel<T> extends JScrollPane implements Refreshable
 
         itemPanel.onReordered((updatedItem) -> {
             tryBuildList();
-
-            this.updatedListener.accept(updatedItem);
+            if (this.updatedListener != null) this.updatedListener.accept(updatedItem);
         });
 
         itemPanel.onRemoved((updatedItem) -> {
             tryBuildList();
-
-            this.updatedListener.accept(updatedItem);
+            if (this.updatedListener != null) this.updatedListener.accept(updatedItem);
         });
 
         itemPanelMap.put(item, itemPanel);
