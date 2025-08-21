@@ -52,11 +52,16 @@ public class ActionBarButton extends JButton
         int w = getWidth();
         int h = getHeight();
 
+        int x = 0;
+        int y = 0;
+        int drawW = w;
+        int drawH = h;
+
         g2.setColor(bg);
-        g2.fillRoundRect(0, 0, w, h, arc, arc);
+        g2.fillRoundRect(x, y, drawW, drawH, arc, arc);
 
         g2.setColor(outline);
-        g2.drawRoundRect(0, 0, w - 1, h - 1, arc, arc);
+        g2.drawRoundRect(x, y, drawW - 1, drawH - 1, arc, arc);
 
         g2.dispose();
         super.paintComponent(g);

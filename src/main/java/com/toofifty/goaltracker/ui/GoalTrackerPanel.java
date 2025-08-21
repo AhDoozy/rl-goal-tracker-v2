@@ -73,24 +73,23 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
 
         // Action bar (shared style)
         ActionBar actionBar = new ActionBar();
-
-        // Left-side actions
-        ActionBarButton addGoalBtn = new ActionBarButton("+ Add goal", () ->
-        {
-            Goal goal = goalManager.createGoal();
-            pendingNewGoal = goal;
-            view(goal);
-            if (goalAddedListener != null) goalAddedListener.accept(goal);
-            if (goalUpdatedListener != null) goalUpdatedListener.accept(goal);
-        });
-
-        actionBar.left().add(addGoalBtn);
+        actionBar.right().setBorder(new EmptyBorder(0, 4, 0, 0));
 
         // Right-side actions: Undo/Redo
         undoButtonRef = new ActionBarButton("Undo", this::doUndo);
         redoButtonRef = new ActionBarButton("Redo", this::doRedo);
         actionBar.right().add(undoButtonRef);
         actionBar.right().add(redoButtonRef);
+
+        ActionBarButton exportButton = new ActionBarButton("Export", () -> {
+            // TODO: implement export
+        });
+        ActionBarButton importButton = new ActionBarButton("Import", () -> {
+            // TODO: implement import
+        });
+        actionBar.right().add(exportButton);
+        actionBar.right().add(importButton);
+
         updateUndoRedoButtons();
 
         // Wrap the title panel with a subtle bottom separator for visual polish
@@ -107,7 +106,10 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         JPanel headerContainer = new JPanel(new BorderLayout());
         headerContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
         headerContainer.add(titleWrapper, BorderLayout.NORTH);
-        headerContainer.add(actionBar, BorderLayout.SOUTH);
+        JPanel actionBarWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        actionBarWrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        actionBarWrapper.add(actionBar);
+        headerContainer.add(actionBarWrapper, BorderLayout.SOUTH);
 
         goalListPanel = new ListPanel<>(goalManager.getGoals(),
             (goal) -> {

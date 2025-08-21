@@ -2,6 +2,7 @@ package com.toofifty.goaltracker.ui.components;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.Dimension;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
@@ -20,11 +21,14 @@ public class ActionBar extends JPanel
 
         left.setOpaque(true);
         left.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        left.setBorder(new EmptyBorder(0, 0, 0, 4));
 
         right.setOpaque(true);
         right.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        right.setBorder(new EmptyBorder(0, 4, 0, 0));
 
         spacer.setOpaque(false);
+        spacer.setPreferredSize(new Dimension(8, 1));
         add(left, BorderLayout.WEST);
         add(right, BorderLayout.EAST);
         add(spacer, BorderLayout.CENTER);
