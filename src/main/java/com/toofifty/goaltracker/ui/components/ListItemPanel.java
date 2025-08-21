@@ -9,10 +9,13 @@ import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JComponent;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
 import net.runelite.client.ui.ColorScheme;
 
 public class ListItemPanel<T> extends JPanel implements Refreshable
@@ -29,6 +32,52 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
 
     protected Consumer<T> reorderedListener;
     protected Consumer<T> removedListener;
+    protected BiConsumer<T, Integer> removedWithIndexListener;
+
+    private MouseAdapter clickListenerAdapter;
+
+    // Inner face of the goal card; only this area changes color on hover/press
+    private JPanel cardBody;
+
+    private void addClickListenerRecursive(Component c)
+    {
+        if (clickListenerAdapter == null) return;
+        c.addMouseListener(clickListenerAdapter);
+        if (c instanceof java.awt.Container)
+        {
+            for (Component child : ((java.awt.Container) c).getComponents())
+            {
+                addClickListenerRecursive(child);
+            }
+        }
+    }
+
+    private void addContextMenuListenerRecursive(Component c)
+    {
+        c.addMouseListener(contextMenuListener);
+        if (c instanceof java.awt.Container)
+        {
+            for (Component child : ((java.awt.Container) c).getComponents())
+            {
+                addContextMenuListenerRecursive(child);
+            }
+        }
+    }
+
+    private final MouseAdapter contextMenuListener = new MouseAdapter()
+    {
+        private void maybeShow(MouseEvent e)
+        {
+            if (!(e.isPopupTrigger() || javax.swing.SwingUtilities.isRightMouseButton(e)))
+            {
+                return;
+            }
+            popupMenu.show((Component) e.getSource(), e.getX(), e.getY());
+        }
+
+        @Override public void mousePressed(MouseEvent e) { maybeShow(e); }
+        @Override public void mouseReleased(MouseEvent e) { maybeShow(e); }
+    };
 
     public ListItemPanel(ReorderableList<T> list, T item)
     {
@@ -36,62 +85,209 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
         this.list = list;
         this.item = item;
 
-        setBorder(new EmptyBorder(8, 8, 8, 8));
-        setBackground(ColorScheme.DARK_GRAY_COLOR);
+        // Create inner card surface to isolate hover/press background changes
+        cardBody = new JPanel(new BorderLayout());
+        cardBody.setOpaque(true);
+        // Add the cardBody as the main content area
+        super.add(cardBody, BorderLayout.CENTER);
+
+        if (item instanceof Goal) {
+            applyGoalCardDefaultStyle();
+        } else {
+            setBorder(new EmptyBorder(2, 4, 2, 4)); // add horizontal and vertical spacing for tasks
+            setBackground(ColorScheme.DARK_GRAY_COLOR);
+        }
 
         moveUp.addActionListener(e -> {
             list.moveUp(item);
-            this.reorderedListener.accept(item);
+            if (this.reorderedListener != null) this.reorderedListener.accept(item);
         });
 
         moveDown.addActionListener(e -> {
             list.moveDown(item);
-            this.reorderedListener.accept(item);
+            if (this.reorderedListener != null) this.reorderedListener.accept(item);
         });
 
         moveToTop.addActionListener(e -> {
             list.moveToTop(item);
-            this.reorderedListener.accept(item);
+            if (this.reorderedListener != null) this.reorderedListener.accept(item);
         });
 
         moveToBottom.addActionListener(e -> {
             list.moveToBottom(item);
-            this.reorderedListener.accept(item);
+            if (this.reorderedListener != null) this.reorderedListener.accept(item);
         });
 
         removeItem.addActionListener(e -> {
+            int index = list.indexOf(item);
             list.remove(item);
-            this.removedListener.accept(item);
+            if (this.removedWithIndexListener != null) this.removedWithIndexListener.accept(item, index);
+            if (this.removedListener != null) this.removedListener.accept(item);
         });
 
         popupMenu.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         setComponentPopupMenu(popupMenu);
+        // Also show context menu on press/release to handle platform differences
+        this.addMouseListener(contextMenuListener);
+        // Ensure popup and click listeners cover all descendants initially
+        addContextMenuListenerRecursive(this);
+        setOpaque(true);
     }
 
     @Override
-    public void setBackground(Color bg)
+    public void add(Component comp, Object constraints)
     {
-        super.setBackground(bg);
-        for (Component component : getComponents()) {
-            component.setBackground(bg);
+        if (item instanceof Goal)
+        {
+            cardBody.add(comp, BorderLayout.CENTER);
+            // For goal cards, strip inner borders from the content to avoid double outlines
+            if (comp instanceof JComponent)
+            {
+                ((JComponent) comp).setBorder(new EmptyBorder(0, 0, 0, 0));
+            }
+            addContextMenuListenerRecursive(comp);
+            if (clickListenerAdapter != null) addClickListenerRecursive(comp);
+            return;
+        }
+        super.add(comp, constraints);
+    }
+
+    @Override
+    public Component add(String name, Component comp)
+    {
+        if (item instanceof Goal)
+        {
+            cardBody.add(comp, BorderLayout.CENTER);
+            if (comp instanceof JComponent)
+            {
+                ((JComponent) comp).setBorder(new EmptyBorder(0, 0, 0, 0));
+            }
+            addContextMenuListenerRecursive(comp);
+            if (clickListenerAdapter != null) addClickListenerRecursive(comp);
+            return comp;
+        }
+        return super.add(name, comp);
+    }
+
+    public ListItemPanel<T> add(Component comp)
+    {
+        cardBody.add(comp, BorderLayout.CENTER);
+        // For goal cards, strip inner borders from the content to avoid double outlines
+        if (item instanceof Goal && comp instanceof JComponent)
+        {
+            ((JComponent) comp).setBorder(new EmptyBorder(0, 0, 0, 0));
+        }
+        addContextMenuListenerRecursive(comp);
+        if (clickListenerAdapter != null) addClickListenerRecursive(comp);
+        return this;
+    }
+
+    public void onClick(Consumer<MouseEvent> clickListener)
+    {
+        clickListenerAdapter = new MouseAdapter()
+        {
+            @Override
+            public void mousePressed(MouseEvent e)
+            {
+                if (e.getButton() == MouseEvent.BUTTON1)
+                {
+                    if (item instanceof Goal) {
+                        applyGoalCardPressedStyle();
+                    }
+                    clickListener.accept(e);
+                }
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e)
+            {
+                if (item instanceof Goal) {
+                    applyGoalCardHoverStyle();
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e)
+            {
+                if (item instanceof Goal) {
+                    applyGoalCardDefaultStyle();
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e)
+            {
+                if (item instanceof Goal) {
+                    if (contains(e.getPoint())) {
+                        applyGoalCardHoverStyle();
+                    } else {
+                        applyGoalCardDefaultStyle();
+                    }
+                }
+            }
+        };
+
+        // Attach to this panel and all current children
+        addMouseListener(clickListenerAdapter);
+        addClickListenerRecursive(this);
+
+        // Optional: use a hand cursor to indicate clickability
+        setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+    }
+
+    public void onRemoved(Consumer<T> removeListener) {
+        this.removedListener = removeListener;
+    }
+
+    public void onReordered(Consumer<T> reorderListener) {
+        this.reorderedListener = reorderListener;
+    }
+
+    public void onRemovedWithIndex(BiConsumer<T, Integer> removeListener) {
+        this.removedWithIndexListener = removeListener;
+    }
+
+    private void applyGoalCardDefaultStyle()
+    {
+        // Outer spacing + shadow on the container panel
+        setBorder(javax.swing.BorderFactory.createCompoundBorder(
+            new EmptyBorder(8, 6, 8, 6),
+            new MatteBorder(2, 2, 4, 4, new Color(0, 0, 0, 60)) // shadow on all sides
+        ));
+        setBackground(ColorScheme.DARK_GRAY_COLOR); // keep outer area stable
+
+        // Inner card face: rounded outline + inner padding
+        if (cardBody != null)
+        {
+            cardBody.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(ColorScheme.DARK_GRAY_COLOR, 1, true),
+                new EmptyBorder(6, 8, 6, 8)
+            ));
+            cardBody.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        }
+    }
+
+    private void applyGoalCardHoverStyle()
+    {
+        if (cardBody != null)
+        {
+            cardBody.setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
+        }
+    }
+
+    private void applyGoalCardPressedStyle()
+    {
+        if (cardBody != null)
+        {
+            cardBody.setBackground(ColorScheme.DARK_GRAY_COLOR);
         }
     }
 
     @Override
     public void refresh()
     {
-        refreshMenu();
-
-        for (Component component : getComponents()) {
-            if (component instanceof Refreshable) {
-                ((Refreshable) component).refresh();
-            }
-        }
-    }
-
-    public void refreshMenu()
-    {
+        // Refresh the context menu
         popupMenu.removeAll();
         if (!list.isFirst(item)) {
             popupMenu.add(moveUp);
@@ -107,7 +303,24 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
         }
         popupMenu.add(removeItem);
 
-        if (item instanceof Goal) {
+        buildAdditionalMenu();
+
+        // Refresh all descendants that implement Refreshable
+        for (Component component : getComponents()) {
+            refreshDescendants(component);
+        }
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Hook for subclasses to append extra context‑menu items.
+     * Base implementation adds Goal‑specific actions only.
+     */
+    protected void buildAdditionalMenu()
+    {
+        if (item instanceof Goal)
+        {
             JMenuItem markAllComplete = new JMenuItem("Mark all as completed");
             JMenuItem markAllIncomplete = new JMenuItem("Mark all as incomplete");
 
@@ -127,45 +340,18 @@ public class ListItemPanel<T> extends JPanel implements Refreshable
             popupMenu.add(markAllComplete);
             popupMenu.add(markAllIncomplete);
         }
+        // Non‑Goal rows (e.g., Tasks) should add their own items in subclasses like ListTaskPanel
     }
 
-    public ListItemPanel<T> add(Component comp)
+    private void refreshDescendants(Component c)
     {
-        super.add(comp, BorderLayout.CENTER);
-        return this;
-    }
-
-    public void onClick(Consumer<MouseEvent> clickListener)
-    {
-        addMouseListener(new MouseAdapter()
-        {
-            @Override
-            public void mousePressed(MouseEvent e)
-            {
-                if (e.getButton() == MouseEvent.BUTTON1) {
-                    clickListener.accept(e);
-                }
+        if (c instanceof Refreshable) {
+            ((Refreshable) c).refresh();
+        }
+        if (c instanceof java.awt.Container) {
+            for (Component child : ((java.awt.Container) c).getComponents()) {
+                refreshDescendants(child);
             }
-
-            @Override
-            public void mouseEntered(MouseEvent e)
-            {
-                setBackground(ColorScheme.DARK_GRAY_HOVER_COLOR);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e)
-            {
-                setBackground(ColorScheme.DARK_GRAY_COLOR);
-            }
-        });
-    }
-
-    public void onRemoved(Consumer<T> removeListener) {
-        this.removedListener = removeListener;
-    }
-
-    public void onReordered(Consumer<T> reorderListener) {
-        this.reorderedListener = reorderListener;
+        }
     }
 }

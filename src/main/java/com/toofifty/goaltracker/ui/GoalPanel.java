@@ -2,6 +2,8 @@ package com.toofifty.goaltracker.ui;
 
 import com.toofifty.goaltracker.GoalTrackerPlugin;
 import com.toofifty.goaltracker.models.Goal;
+import com.toofifty.goaltracker.models.ActionHistory;
+import com.toofifty.goaltracker.models.RemoveTaskAction;
 import com.toofifty.goaltracker.models.enums.TaskType;
 import com.toofifty.goaltracker.models.enums.Status;
 import com.toofifty.goaltracker.models.task.ManualTask;
@@ -9,6 +11,8 @@ import com.toofifty.goaltracker.models.task.Task;
 import com.toofifty.goaltracker.ui.components.EditableInput;
 import com.toofifty.goaltracker.ui.components.ListPanel;
 import com.toofifty.goaltracker.ui.components.ListTaskPanel;
+import com.toofifty.goaltracker.ui.components.ActionBar;
+import com.toofifty.goaltracker.ui.components.ActionBarButton;
 import javax.swing.*;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.JTextComponent;
@@ -18,6 +22,7 @@ import java.awt.BorderLayout;
 import java.util.Objects;
 import java.util.function.Consumer;
 import javax.swing.border.EmptyBorder;
+import javax.swing.BorderFactory;
 import net.runelite.client.ui.ColorScheme;
 
 public class GoalPanel extends JPanel implements Refreshable
@@ -31,6 +36,10 @@ public class GoalPanel extends JPanel implements Refreshable
     private Consumer<Task> taskAddedListener;
     private Consumer<Task> taskUpdatedListener;
 
+    private final ActionHistory actionHistory = new ActionHistory();
+    private ActionBarButton undoButton;
+    private ActionBarButton redoButton;
+
     GoalPanel(GoalTrackerPlugin plugin, Goal goal, Runnable closeListener)
     {
         super();
@@ -42,6 +51,21 @@ public class GoalPanel extends JPanel implements Refreshable
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBorder(new EmptyBorder(0, 0, 8, 0));
         add(headerPanel, BorderLayout.NORTH);
+
+        // Goal List Action Bar: Back (left), Undo/Redo (right)
+        ActionBar actionBar = new ActionBar();
+
+        ActionBarButton backButton = new ActionBarButton("Back", closeListener::run);
+        undoButton = new ActionBarButton("Undo", this::doUndo);
+        redoButton = new ActionBarButton("Redo", this::doRedo);
+
+        actionBar.left().add(backButton);
+        actionBar.right().add(undoButton);
+        actionBar.right().add(redoButton);
+
+        headerPanel.add(actionBar, BorderLayout.NORTH);
+
+        updateUndoRedoButtons();
 
         descriptionInput = new EditableInput((value) -> {
             goal.setDescription(value);
@@ -59,11 +83,18 @@ public class GoalPanel extends JPanel implements Refreshable
 
         taskListPanel = new ListPanel<>(goal.getTasks(), (task) -> {
             ListTaskPanel taskPanel = new ListTaskPanel(goal.getTasks(), task);
+            taskPanel.setActionHistory(actionHistory);
             TaskItemContent taskContent = new TaskItemContent(plugin, goal, task);
+            taskContent.setActionHistory(actionHistory);
             taskPanel.add(taskContent);
             taskPanel.setTaskContent(taskContent);
             taskContent.refresh();
-            taskPanel.setBorder(new EmptyBorder(2, 4, 2, 4));
+            taskPanel.setOpaque(true);
+            taskPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+            taskPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(4, 6, 0, 6, ColorScheme.DARKER_GRAY_COLOR), // darker line for contrast
+                new EmptyBorder(2, 4, 2, 4)
+            ));
 
 
             taskPanel.onIndented(e -> {
@@ -76,6 +107,11 @@ public class GoalPanel extends JPanel implements Refreshable
                 this.goalUpdatedListener.accept(goal);
                 plugin.getUiStatusManager().refresh(goal);
                 this.refresh();
+            });
+
+            taskPanel.onRemovedWithIndex((removedTask, index) -> {
+                actionHistory.push(new RemoveTaskAction(goal.getTasks(), removedTask, index));
+                updateUndoRedoButtons();
             });
 
             return taskPanel;
@@ -200,5 +236,31 @@ public class GoalPanel extends JPanel implements Refreshable
             }
         }
         return null;
+    }
+
+    private void updateUndoRedoButtons()
+    {
+        if (undoButton != null)
+        {
+            undoButton.setEnabled(actionHistory.hasUndo());
+        }
+        if (redoButton != null)
+        {
+            redoButton.setEnabled(actionHistory.hasRedo());
+        }
+    }
+
+    private void doUndo()
+    {
+        actionHistory.undo();
+        refreshTaskList();
+        updateUndoRedoButtons();
+    }
+
+    private void doRedo()
+    {
+        actionHistory.redo();
+        refreshTaskList();
+        updateUndoRedoButtons();
     }
 }

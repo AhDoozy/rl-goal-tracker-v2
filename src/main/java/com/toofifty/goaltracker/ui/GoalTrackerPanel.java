@@ -3,10 +3,12 @@ package com.toofifty.goaltracker.ui;
 import com.toofifty.goaltracker.GoalManager;
 import com.toofifty.goaltracker.GoalTrackerPlugin;
 import com.toofifty.goaltracker.models.Goal;
+import com.toofifty.goaltracker.models.UndoStack;
 import com.toofifty.goaltracker.models.task.Task;
+import com.toofifty.goaltracker.ui.components.ActionBar;
+import com.toofifty.goaltracker.ui.components.ActionBarButton;
 import com.toofifty.goaltracker.ui.components.ListItemPanel;
 import com.toofifty.goaltracker.ui.components.ListPanel;
-import com.toofifty.goaltracker.ui.components.TextButton;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
@@ -25,17 +27,23 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     private final JPanel mainPanel = new JPanel(new BorderLayout());
     private final ListPanel<Goal> goalListPanel;
     private final GoalTrackerPlugin plugin;
+    private final GoalManager goalManager;
+    private final UndoStack<Goal> undoStack = new UndoStack<>();
+    private ActionBarButton undoButtonRef;
+    private ActionBarButton redoButtonRef;
     private GoalPanel goalPanel;
     private Consumer<Goal> goalAddedListener;
     private Consumer<Goal> goalUpdatedListener;
     private Consumer<Task> taskAddedListener;
     private Consumer<Task> taskUpdatedListener;
+    private Goal pendingNewGoal;
 
     @Inject
     public GoalTrackerPanel(GoalTrackerPlugin plugin, GoalManager goalManager)
     {
         super(false);
         this.plugin = plugin;
+        this.goalManager = goalManager;
 
         setBackground(ColorScheme.DARK_GRAY_COLOR);
         setLayout(new BorderLayout());
@@ -48,48 +56,57 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
 
         // (Removed "+ Add goal" button from the title panel)
 
-        JLabel title = new JLabel();
-        title.setText("Goal Tracker");
+        JLabel title = new JLabel("Goal Tracker v2");
         title.setForeground(Color.WHITE);
         title.setFont(FontManager.getRunescapeBoldFont());
-        titlePanel.add(title, BorderLayout.WEST);
 
-        // New action bar below the title
-        JPanel actionBar = new JPanel(new BorderLayout());
-        actionBar.setBorder(new EmptyBorder(6, 10, 6, 10));
-        actionBar.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        JLabel author = new JLabel("By: AhDoozy");
+        author.setForeground(Color.LIGHT_GRAY);
+        author.setFont(title.getFont().deriveFont(title.getFont().getSize2D() - 3f));
 
-        JPanel actionsLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        actionsLeft.setOpaque(true);
-        actionsLeft.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        JPanel titleTextPanel = new JPanel(new GridLayout(2, 1));
+        titleTextPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        titleTextPanel.add(title);
+        titleTextPanel.add(author);
 
-        TextButton addGoalBtn = new TextButton("+ Add goal",
-            e -> {
-                Goal goal = goalManager.createGoal();
-                view(goal);
+        titlePanel.add(titleTextPanel, BorderLayout.WEST);
 
-                if (Objects.nonNull(this.goalAddedListener)) this.goalAddedListener.accept(goal);
-                if (Objects.nonNull(this.goalUpdatedListener)) this.goalUpdatedListener.accept(goal);
-            }
-        ).narrow();
+        // Action bar (shared style)
+        ActionBar actionBar = new ActionBar();
 
-        TextButton moveBtn = new TextButton("Move", e -> {}).narrow();
-        moveBtn.setEnabled(false);
-        moveBtn.setToolTipText("Coming soon");
+        // Left-side actions
+        ActionBarButton addGoalBtn = new ActionBarButton("+ Add goal", () ->
+        {
+            Goal goal = goalManager.createGoal();
+            pendingNewGoal = goal;
+            view(goal);
+            if (goalAddedListener != null) goalAddedListener.accept(goal);
+            if (goalUpdatedListener != null) goalUpdatedListener.accept(goal);
+        });
 
-        TextButton bulkEditBtn = new TextButton("Bulk Edit", e -> {}).narrow();
-        bulkEditBtn.setEnabled(false);
-        bulkEditBtn.setToolTipText("Coming soon");
+        actionBar.left().add(addGoalBtn);
 
-        actionsLeft.add(addGoalBtn);
-        actionsLeft.add(moveBtn);
-        actionsLeft.add(bulkEditBtn);
-        actionBar.add(actionsLeft, BorderLayout.WEST);
+        // Right-side actions: Undo/Redo
+        undoButtonRef = new ActionBarButton("Undo", this::doUndo);
+        redoButtonRef = new ActionBarButton("Redo", this::doRedo);
+        actionBar.right().add(undoButtonRef);
+        actionBar.right().add(redoButtonRef);
+        updateUndoRedoButtons();
 
-        // Stack title and action bar into a single header container
+        // Wrap the title panel with a subtle bottom separator for visual polish
+        JPanel titleWrapper = new JPanel(new BorderLayout());
+        titleWrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        titleWrapper.add(titlePanel, BorderLayout.CENTER);
+
+        // 1px divider under the header title
+        JPanel headerSeparator = new JPanel();
+        headerSeparator.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        headerSeparator.setPreferredSize(new Dimension(1, 4));
+        titleWrapper.add(headerSeparator, BorderLayout.SOUTH);
+
         JPanel headerContainer = new JPanel(new BorderLayout());
         headerContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        headerContainer.add(titlePanel, BorderLayout.NORTH);
+        headerContainer.add(titleWrapper, BorderLayout.NORTH);
         headerContainer.add(actionBar, BorderLayout.SOUTH);
 
         goalListPanel = new ListPanel<>(goalManager.getGoals(),
@@ -98,12 +115,15 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
 
                 panel.onClick(e -> this.view(goal));
                 panel.add(new GoalItemContent(plugin, goal));
+                panel.onRemovedWithIndex((removedGoal, index) -> {
+                    recordGoalRemoval(removedGoal, index);
+                });
 
                 return panel;
             }
         );
         goalListPanel.setGap(0);
-        goalListPanel.setPlaceholder("Add a new goal using the button above");
+        goalListPanel.setPlaceholder("<html><div style='text-align:center;color:#bfbfbf;padding:8px 0;'>No goals yet.<br/>Click <b>+ Add goal</b> above to create your first one.</div></html>");
 
         mainPanel.add(headerContainer, BorderLayout.NORTH);
         mainPanel.add(goalListPanel, BorderLayout.CENTER);
@@ -114,30 +134,6 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     public void view(Goal goal)
     {
         removeAll();
-
-        // Top control bar: Back, Undo, Redo
-        JPanel controlBar = new JPanel(new BorderLayout());
-        controlBar.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        controlBar.setBorder(new EmptyBorder(6, 6, 6, 6));
-
-        JPanel leftButtons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        leftButtons.setOpaque(true);
-        leftButtons.setBackground(ColorScheme.DARK_GRAY_COLOR);
-
-        TextButton backButton = new TextButton("< Back", e -> this.home()).narrow();
-        TextButton undoButton = new TextButton("Undo", e -> { /* hook up in future */ }).narrow();
-        TextButton redoButton = new TextButton("Redo", e -> { /* hook up in future */ }).narrow();
-        undoButton.setEnabled(false);
-        redoButton.setEnabled(false);
-        undoButton.setToolTipText("Undo last change (coming soon)");
-        redoButton.setToolTipText("Redo last change (coming soon)");
-
-        leftButtons.add(backButton);
-        leftButtons.add(undoButton);
-        leftButtons.add(redoButton);
-        controlBar.add(leftButtons, BorderLayout.WEST);
-
-        add(controlBar, BorderLayout.NORTH);
 
         this.goalPanel = new GoalPanel(plugin, goal, this::home);
 
@@ -154,10 +150,32 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
 
     public void home()
     {
+        // Auto-remove an empty goal created via "+ Add goal" if user backs out without adding tasks
+        if (pendingNewGoal != null)
+        {
+            try {
+                if (pendingNewGoal.getTasks() == null || pendingNewGoal.getTasks().isEmpty()) {
+                    goalManager.getGoals().remove(pendingNewGoal);
+                }
+            } finally {
+                pendingNewGoal = null;
+            }
+        }
+        // Clear the GoalTrackerPanel content and switch back to the main panel
         removeAll();
-        add(mainPanel, BorderLayout.CENTER);
+
+        // Rebuild the list BEFORE attaching the main panel to ensure layout has components
         goalListPanel.tryBuildList();
         goalListPanel.refresh();
+
+        // Make sure the list is the CENTER of the main panel (in case layout got disturbed)
+        mainPanel.remove(goalListPanel);
+        mainPanel.add(goalListPanel, BorderLayout.CENTER);
+
+        // Attach main panel and validate
+        add(mainPanel, BorderLayout.CENTER);
+        mainPanel.revalidate();
+        mainPanel.repaint();
 
         revalidate();
         repaint();
@@ -205,5 +223,72 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         if (this.goalPanel != null) {
             this.goalPanel.onTaskAdded(this.taskAddedListener);
         }
+    }
+
+    private void updateUndoRedoButtons()
+    {
+        if (undoButtonRef != null)
+        {
+            undoButtonRef.setEnabled(undoStack.hasUndo());
+            undoButtonRef.setToolTipText(undoStack.hasUndo() ? null : "Nothing to undo");
+        }
+        if (redoButtonRef != null)
+        {
+            redoButtonRef.setEnabled(undoStack.hasRedo());
+            redoButtonRef.setToolTipText(undoStack.hasRedo() ? null : "Nothing to redo");
+        }
+    }
+
+    private void doUndo()
+    {
+        var entry = undoStack.popForUndo();
+        if (entry == null) { updateUndoRedoButtons(); return; }
+
+        java.util.List<Goal> goals = goalManager.getGoals();
+        int idx = Math.max(0, Math.min(entry.getIndex(), goals.size()));
+        goals.add(idx, entry.getItem());
+
+        // If we are on the home view, refresh the list; otherwise leave as-is.
+        if (goalPanel == null)
+        {
+            goalListPanel.tryBuildList();
+            goalListPanel.refresh();
+            revalidate();
+            repaint();
+        }
+        updateUndoRedoButtons();
+    }
+
+    private void doRedo()
+    {
+        var entry = undoStack.popForRedo();
+        if (entry == null) { updateUndoRedoButtons(); return; }
+
+        java.util.List<Goal> goals = goalManager.getGoals();
+        int idx = goals.indexOf(entry.getItem());
+        if (idx >= 0)
+        {
+            goals.remove(idx);
+        }
+        // If on home view, refresh
+        if (goalPanel == null)
+        {
+            goalListPanel.tryBuildList();
+            goalListPanel.refresh();
+            revalidate();
+            repaint();
+        }
+        updateUndoRedoButtons();
+    }
+
+    /**
+     * Call this when a goal is removed from the home list to record it for Undo.
+     * @param goal the goal that was removed
+     * @param index the index it had before removal
+     */
+    public void recordGoalRemoval(Goal goal, int index)
+    {
+        undoStack.pushRemove(goal, index);
+        updateUndoRedoButtons();
     }
 }

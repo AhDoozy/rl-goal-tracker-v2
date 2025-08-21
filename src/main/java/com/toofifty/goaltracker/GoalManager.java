@@ -36,38 +36,40 @@ public class GoalManager
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends Task> List<T> getTasksByTypeAndAnyStatus(TaskType type, Status ...statuses)
+    public <T extends Task> List<T> getTasksByTypeAndAnyStatus(TaskType type, Status... statuses)
     {
         List<T> tasks = new ArrayList<>();
-        for (Goal goal : goals) {
+        for (Goal goal : goals)
+        {
             tasks.addAll((List<T>) goal.getTasks().stream()
-                .filter((task) -> task.getType() == type && Arrays.stream(statuses).anyMatch((status) -> status == task.getStatus()))
-                .collect(Collectors.toList())
-            );
+                    .filter(task -> task.getType() == type && Arrays.stream(statuses).anyMatch(status -> status == task.getStatus()))
+                    .collect(Collectors.toList()));
         }
         return tasks;
     }
 
-    public <T extends Task> List<T> getIncompleteTasksByType(TaskType type) {
+    public <T extends Task> List<T> getIncompleteTasksByType(TaskType type)
+    {
         return this.getTasksByTypeAndAnyStatus(type, Status.NOT_STARTED, Status.IN_PROGRESS);
     }
 
     public void save()
     {
         config.goalTrackerData(goalSerializer.serialize(goals));
-
         log.info("Saved " + goals.size() + " goals");
     }
 
     public void load()
     {
-        try {
+        try
+        {
             this.goals.clear();
             this.goals.addAll(goalSerializer.deserialize(config.goalTrackerData()));
-
             log.info("Loaded " + this.goals.size() + " goals");
-        } catch (Exception e) {
-            log.error("Failed to load goals!");
+        }
+        catch (Exception e)
+        {
+            log.error("Failed to load goals!", e);
         }
     }
 }

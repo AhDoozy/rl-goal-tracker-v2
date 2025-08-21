@@ -27,6 +27,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.AsyncBufferedImage;
+import net.runelite.client.util.ColorUtil;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -189,12 +190,8 @@ public class GoalTrackerPlugin extends Plugin
         log.debug("Notify: [Goal Tracker] You have completed a task: " + task + "!");
 
         String message = "[Goal Tracker] You have completed a task: " + task + "!";
-        String formattedMessage = new ChatMessageBuilder().append(config.completionMessageColor(), message).build();
-        chatMessageManager.queue(QueuedMessage.builder()
-            .type(ChatMessageType.CONSOLE)
-            .name("Goal Tracker")
-            .runeLiteFormattedMessage(formattedMessage)
-            .build());
+        String formattedMessage = ColorUtil.wrapWithColorTag(message, config.completionMessageColor());
+        client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", formattedMessage, null);
 
         task.setNotified(true);
     }

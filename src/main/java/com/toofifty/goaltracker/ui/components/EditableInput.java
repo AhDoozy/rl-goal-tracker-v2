@@ -12,6 +12,13 @@ import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.JPopupMenu;
+import javax.swing.JMenuItem;
+import javax.swing.KeyStroke;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.text.DefaultEditorKit;
+import java.awt.Toolkit;
 import lombok.Setter;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.FlatTextField;
@@ -54,7 +61,7 @@ public class EditableInput extends JPanel
         cancel.onClick(e -> this.cancel());
 
         edit.onClick(e -> {
-            inputField.setEditable(true);
+            inputField.getTextField().setEditable(true);
             updateActions(true);
         });
 
@@ -64,12 +71,43 @@ public class EditableInput extends JPanel
 
         inputField.setText(localValue);
         inputField.setBorder(null);
-        inputField.setEditable(false);
+        inputField.getTextField().setEditable(false);
+        inputField.getTextField().setFocusable(true);
         inputField.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         inputField.setPreferredSize(new Dimension(50, 24));
         inputField.getTextField().setForeground(Color.WHITE);
         inputField.getTextField().setBorder(new EmptyBorder(0, 8, 0, 0));
-        inputField.addKeyListener(new KeyAdapter()
+        // Ensure standard copy/paste/cut/select-all shortcuts work on all platforms
+        final var tf = inputField.getTextField();
+        InputMap im = tf.getInputMap();
+        ActionMap am = tf.getActionMap();
+        int menuMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, menuMask), DefaultEditorKit.copyAction);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, menuMask), DefaultEditorKit.pasteAction);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, menuMask), DefaultEditorKit.cutAction);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, menuMask), DefaultEditorKit.selectAllAction);
+        // Also support Insert/Delete variants
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, KeyEvent.SHIFT_DOWN_MASK), DefaultEditorKit.pasteAction);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, KeyEvent.CTRL_DOWN_MASK), DefaultEditorKit.copyAction);
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, KeyEvent.SHIFT_DOWN_MASK), DefaultEditorKit.cutAction);
+
+        // Context menu for mouse-based copy/paste
+        JPopupMenu popup = new JPopupMenu();
+        JMenuItem cut = new JMenuItem("Cut");
+        cut.addActionListener(e -> tf.cut());
+        popup.add(cut);
+        JMenuItem copy = new JMenuItem("Copy");
+        copy.addActionListener(e -> tf.copy());
+        popup.add(copy);
+        JMenuItem paste = new JMenuItem("Paste");
+        paste.addActionListener(e -> tf.paste());
+        popup.add(paste);
+        JMenuItem selectAll = new JMenuItem("Select All");
+        selectAll.addActionListener(e -> tf.selectAll());
+        popup.add(selectAll);
+        tf.setComponentPopupMenu(popup);
+        tf.setDragEnabled(true);
+        inputField.getTextField().addKeyListener(new KeyAdapter()
         {
             @Override
             public void keyPressed(KeyEvent e)
@@ -91,14 +129,14 @@ public class EditableInput extends JPanel
         localValue = inputField.getText();
         saveAction.accept(localValue);
 
-        inputField.setEditable(false);
+        inputField.getTextField().setEditable(false);
         updateActions(false);
         requestFocusInWindow();
     }
 
     private void cancel()
     {
-        inputField.setEditable(false);
+        inputField.getTextField().setEditable(false);
         inputField.setText(localValue);
 
         updateActions(false);
