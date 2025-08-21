@@ -23,6 +23,10 @@
 - Task list panel context menus reorganized with a **Move** submenu and cascading complete/incomplete toggle that applies to children.
 - Initial refresh calls for Task and Goal content so icons/text render correctly on login.
 - Automatic ancestor `ListPanel` refresh propagation to keep Home goal list in sync when tasks change.
+- Export and Import functionality: Goals can now be exported to JSON and imported back with full UI refresh.
+- JSON file filter in Import/Export dialogs for safer file selection.
+- Automatic warming of ItemTask icons on plugin startup and login tick, and after JSON import, ensuring icons display immediately.
+- GoalsChangedListener system in GoalManager to notify panels and auto-refresh home view when goals are saved or loaded.
 
 ### Changed
 - Pre-req button made more compact (~25% smaller).
@@ -64,6 +68,8 @@
 - Goal cards now use a lighter fill with a full shadow around borders, and hover/press only affect the card face.
 - Header divider under “Goal Tracker” made thicker (4px) for stronger separation.
 - Right-click menus refactored so Tasks build their own menu and Goals build theirs, preventing duplicate/unusable items.
+- ActionBar spacing refined between Redo and Export buttons to prevent overlap and fit Import button.
+- Plugin startup now triggers item icon warm-up so icons are ready before login.
 
 ### Fixed
 - Home panel Undo/Redo buttons removed; these controls now exist only in Goal view.
@@ -77,3 +83,7 @@
 - Fixed child task refresh issues after parent complete/incomplete cascades by recursively refreshing all descendants.
 - Fixed blank panel issue when switching from Home to Goal view by only using inner card body for Goal rows.
 - Fixed completion chat message not appearing; now delivered as a proper `GAMEMESSAGE` with customizable config color.
+- Export/Import buttons previously non-functional; now wired to save/load JSON correctly.
+- Item icons not appearing until entering a goal; fixed by warming icons at startup/login and after import.
+- Home panel not refreshing after task completion; fixed with GoalsChangedListener refresh hook.
+- Overlapping UI issue around Export button resolved by adjusting panel borders and layout.

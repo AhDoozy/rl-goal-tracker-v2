@@ -18,6 +18,9 @@
 - Thicker header divider under “Goal Tracker” for clearer separation.
 - Automatic refresh propagation so Home goals update instantly when tasks change.
 - Completion chat messages delivered as proper Game messages with configurable colors.
+- Export and Import functionality: save your goals to a JSON file and import them back with full UI refresh.
+- Automatic warming of item icons so they load at startup, on login, and after import.
+- GoalsChangedListener system to auto-refresh the Home panel when goals change.
 
 ### ♻️ Redesigned Features
 
@@ -43,6 +46,7 @@
 - Copy and paste support in the goal name input field
 - Context menu entries rebuilt dynamically before opening to always reflect the latest state.
 - Task and goal content now force an initial refresh so icons and text render correctly at login.
+- Refined ActionBar spacing to ensure Export and Import buttons fit without overlap.
 
 </details>
 
@@ -60,6 +64,10 @@
 - Fixed child task refresh issues by recursively refreshing all descendants.
 - Fixed blank panel issue when switching from Home to Goal view.
 - Fixed completion chat message not appearing on task completion.
+- Export/Import buttons were previously non-functional; now they work correctly.
+- Item icons sometimes failed to appear until entering a goal; now fixed by preloading at startup/login and after import.
+- Home panel not refreshing after completing a task; fixed with a new listener system.
+- Overlapping issue around the Export button fixed by layout adjustments.
 
 </details>
 
