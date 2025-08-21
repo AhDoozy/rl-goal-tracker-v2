@@ -28,6 +28,8 @@ public class GoalManager
     @Getter
     private final ReorderableList<Goal> goals = new ReorderableList<>();
 
+    private final List<Runnable> goalsChangedListeners = new ArrayList<>();
+
     public Goal createGoal()
     {
         Goal goal = Goal.builder().build();
@@ -57,6 +59,7 @@ public class GoalManager
     {
         config.goalTrackerData(goalSerializer.serialize(goals));
         log.info("Saved " + goals.size() + " goals");
+        notifyGoalsChanged();
     }
 
     public void load()
@@ -65,11 +68,52 @@ public class GoalManager
         {
             this.goals.clear();
             this.goals.addAll(goalSerializer.deserialize(config.goalTrackerData()));
+            notifyGoalsChanged();
             log.info("Loaded " + this.goals.size() + " goals");
         }
         catch (Exception e)
         {
             log.error("Failed to load goals!", e);
+        }
+    }
+    /**
+     * Return the current goals as JSON for export.
+     * @param pretty pretty-print output
+     */
+    public String exportJson(boolean pretty)
+    {
+        return goalSerializer.serialize(goals, pretty);
+    }
+
+    /**
+     * Import goals from JSON and persist them.
+     */
+    public void importJson(String json)
+    {
+        try
+        {
+            this.goals.clear();
+            this.goals.addAll(goalSerializer.deserialize(json));
+            save();
+        }
+        catch (Exception e)
+        {
+            log.error("Failed to import goals!", e);
+        }
+    }
+    public void addGoalsChangedListener(Runnable listener)
+    {
+        if (listener != null && !goalsChangedListeners.contains(listener))
+        {
+            goalsChangedListeners.add(listener);
+        }
+    }
+
+    private void notifyGoalsChanged()
+    {
+        for (Runnable r : goalsChangedListeners)
+        {
+            try { r.run(); } catch (Exception ignored) {}
         }
     }
 }

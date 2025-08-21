@@ -107,6 +107,8 @@ public class GoalTrackerPlugin extends Plugin
     @Setter
     private boolean validateAll = true;
 
+    private boolean warmedIcons = false;
+
     @Override
     protected void startUp()
     {
@@ -140,6 +142,10 @@ public class GoalTrackerPlugin extends Plugin
             goalManager.save();
         });
         goalTrackerPanel.onTaskUpdated((task) -> goalManager.save());
+
+        // Preload item icons at plugin startup so they are visible immediately
+        warmItemIcons();
+        warmedIcons = true; // avoid re-warming on first login tick
     }
 
     @Override
@@ -196,10 +202,29 @@ public class GoalTrackerPlugin extends Plugin
         task.setNotified(true);
     }
 
+    public void warmItemIcons()
+    {
+        // Iterate all tasks and ensure item icons are requested so they appear without opening search
+        goalManager.getGoals().forEach(goal -> {
+            if (goal.getTasks() == null) return;
+            goal.getTasks().forEach(task -> {
+                if (task instanceof ItemTask)
+                {
+                    try {
+                        taskIconService.get((ItemTask) task);
+                    } catch (Exception ignored) { }
+                }
+            });
+        });
+        // Refresh UI after warming to repaint icons
+        javax.swing.SwingUtilities.invokeLater(goalTrackerPanel::refresh);
+    }
+
     @Subscribe
     public void onGameStateChanged(GameStateChanged event)
     {
         if (client.getGameState() != GameState.LOGGED_IN) {
+            warmedIcons = false;
             return;
         }
 
@@ -222,6 +247,12 @@ public class GoalTrackerPlugin extends Plugin
         // onGameStateChanged reports incorrect quest statuses,
         // so this need to be done in this subscriber
         goalTrackerPanel.refresh();
+
+        if (!warmedIcons)
+        {
+            warmItemIcons();
+            warmedIcons = true;
+        }
 
         goalManager.getGoals().stream()
             .flatMap(goal -> goal.getTasks().stream())
