@@ -15,14 +15,12 @@ import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.util.Objects;
 import java.util.function.Consumer;
 
-@Singleton
 public class GoalTrackerPanel extends PluginPanel implements Refreshable
 {
     private final JPanel mainPanel = new JPanel(new BorderLayout());
@@ -45,17 +43,17 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         super(false);
         this.plugin = plugin;
         this.goalManager = goalManager;
+        this.goalManager.addGoalsChangedListener(() -> javax.swing.SwingUtilities.invokeLater(this::refreshHomeListIfVisible));
 
         setBackground(ColorScheme.DARK_GRAY_COLOR);
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(8, 8, 8, 8));
 
+        // Header with title and + Add goal on right
         JPanel titlePanel = new JPanel();
         titlePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         titlePanel.setLayout(new BorderLayout());
         titlePanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
-
-        // (Removed "+ Add goal" button from the title panel)
 
         JLabel title = new JLabel("Goal Tracker v2");
         title.setForeground(Color.WHITE);
@@ -69,43 +67,34 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         titleTextPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
         titleTextPanel.add(title);
         titleTextPanel.add(author);
-
         titlePanel.add(titleTextPanel, BorderLayout.WEST);
 
-        // Re-add "+ Add goal" to the header (right side)
         JPanel addGoalPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         addGoalPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
         ActionBarButton addGoalBtn = new ActionBarButton("+ Add goal", this::addNewGoal);
         addGoalPanel.add(addGoalBtn);
         titlePanel.add(addGoalPanel, BorderLayout.EAST);
 
-        // Action bar (shared style)
+        // Action bar
         ActionBar actionBar = new ActionBar();
         actionBar.right().setBorder(new EmptyBorder(0, 4, 0, 0));
 
-        // Right-side actions: Undo/Redo
         undoButtonRef = new ActionBarButton("Undo", this::doUndo);
         redoButtonRef = new ActionBarButton("Redo", this::doRedo);
         actionBar.left().add(undoButtonRef);
         actionBar.left().add(redoButtonRef);
 
-        ActionBarButton exportButton = new ActionBarButton("Export", () -> {
-            // TODO: implement export
-        });
-        ActionBarButton importButton = new ActionBarButton("Import", () -> {
-            // TODO: implement import
-        });
+        ActionBarButton exportButton = new ActionBarButton("Export", this::exportGoalsToFile);
+        ActionBarButton importButton = new ActionBarButton("Import", this::importGoalsFromFile);
         actionBar.right().add(exportButton);
         actionBar.right().add(importButton);
 
         updateUndoRedoButtons();
 
-        // Wrap the title panel with a subtle bottom separator for visual polish
         JPanel titleWrapper = new JPanel(new BorderLayout());
         titleWrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
         titleWrapper.add(titlePanel, BorderLayout.CENTER);
 
-        // 1px divider under the header title
         JPanel headerSeparator = new JPanel();
         headerSeparator.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         headerSeparator.setPreferredSize(new Dimension(1, 4));
@@ -116,19 +105,13 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         headerContainer.add(titleWrapper, BorderLayout.NORTH);
         headerContainer.add(actionBar, BorderLayout.SOUTH);
 
-        goalListPanel = new ListPanel<>(goalManager.getGoals(),
-            (goal) -> {
-                var panel = new ListItemPanel<>(goalManager.getGoals(), goal);
-
-                panel.onClick(e -> this.view(goal));
-                panel.add(new GoalItemContent(plugin, goal));
-                panel.onRemovedWithIndex((removedGoal, index) -> {
-                    recordGoalRemoval(removedGoal, index);
-                });
-
-                return panel;
-            }
-        );
+        goalListPanel = new ListPanel<>(goalManager.getGoals(), (goal) -> {
+            var panel = new ListItemPanel<>(goalManager.getGoals(), goal);
+            panel.onClick(e -> this.view(goal));
+            panel.add(new GoalItemContent(plugin, goal));
+            panel.onRemovedWithIndex(this::recordGoalRemoval);
+            return panel;
+        });
         goalListPanel.setGap(0);
         goalListPanel.setPlaceholder("<html><div style='text-align:center;color:#bfbfbf;padding:8px 0;'>No goals yet.<br/>Click <b>+ Add goal</b> above to create your first one.</div></html>");
 
@@ -138,26 +121,32 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         home();
     }
 
+    private void refreshHomeListIfVisible()
+    {
+        if (goalPanel == null)
+        {
+            goalListPanel.tryBuildList();
+            goalListPanel.refresh();
+            revalidate();
+            repaint();
+        }
+    }
+
     public void view(Goal goal)
     {
         removeAll();
-
         this.goalPanel = new GoalPanel(plugin, goal, this::home);
-
         this.goalPanel.onGoalUpdated(this.goalUpdatedListener);
         this.goalPanel.onTaskAdded(this.taskAddedListener);
         this.goalPanel.onTaskUpdated(this.taskUpdatedListener);
-
         add(this.goalPanel, BorderLayout.CENTER);
         this.goalPanel.refresh();
-
         revalidate();
         repaint();
     }
 
     public void home()
     {
-        // Auto-remove an empty goal created via "+ Add goal" if user backs out without adding tasks
         if (pendingNewGoal != null)
         {
             try {
@@ -168,47 +157,34 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
                 pendingNewGoal = null;
             }
         }
-        // Clear the GoalTrackerPanel content and switch back to the main panel
         removeAll();
-
-        // Rebuild the list BEFORE attaching the main panel to ensure layout has components
         goalListPanel.tryBuildList();
         goalListPanel.refresh();
-
-        // Make sure the list is the CENTER of the main panel (in case layout got disturbed)
         mainPanel.remove(goalListPanel);
         mainPanel.add(goalListPanel, BorderLayout.CENTER);
-
-        // Attach main panel and validate
         add(mainPanel, BorderLayout.CENTER);
         mainPanel.revalidate();
         mainPanel.repaint();
-
         revalidate();
         repaint();
-
         this.goalPanel = null;
     }
 
     @Override
     public void refresh()
     {
-        // refresh single-view goal
         for (Component component : getComponents()) {
             if (component instanceof Refreshable) {
                 ((Refreshable) component).refresh();
             }
         }
-
         goalListPanel.refresh();
     }
 
     public void onGoalUpdated(Consumer<Goal> listener)
     {
         this.goalUpdatedListener = listener;
-
         this.goalListPanel.onUpdated(this.goalUpdatedListener);
-
         if (this.goalPanel != null) {
             this.goalPanel.onGoalUpdated(this.goalUpdatedListener);
         }
@@ -217,7 +193,6 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     public void onTaskUpdated(Consumer<Task> listener)
     {
         this.taskUpdatedListener = listener;
-
         if (this.goalPanel != null) {
             this.goalPanel.onTaskUpdated(this.taskUpdatedListener);
         }
@@ -226,7 +201,6 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     public void onTaskAdded(Consumer<Task> listener)
     {
         this.taskAddedListener = listener;
-
         if (this.goalPanel != null) {
             this.goalPanel.onTaskAdded(this.taskAddedListener);
         }
@@ -250,12 +224,9 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     {
         var entry = undoStack.popForUndo();
         if (entry == null) { updateUndoRedoButtons(); return; }
-
         java.util.List<Goal> goals = goalManager.getGoals();
         int idx = Math.max(0, Math.min(entry.getIndex(), goals.size()));
         goals.add(idx, entry.getItem());
-
-        // If we are on the home view, refresh the list; otherwise leave as-is.
         if (goalPanel == null)
         {
             goalListPanel.tryBuildList();
@@ -270,14 +241,12 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     {
         var entry = undoStack.popForRedo();
         if (entry == null) { updateUndoRedoButtons(); return; }
-
         java.util.List<Goal> goals = goalManager.getGoals();
         int idx = goals.indexOf(entry.getItem());
         if (idx >= 0)
         {
             goals.remove(idx);
         }
-        // If on home view, refresh
         if (goalPanel == null)
         {
             goalListPanel.tryBuildList();
@@ -288,21 +257,76 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         updateUndoRedoButtons();
     }
 
-    /**
-     * Call this when a goal is removed from the home list to record it for Undo.
-     * @param goal the goal that was removed
-     * @param index the index it had before removal
-     */
     public void recordGoalRemoval(Goal goal, int index)
     {
         undoStack.pushRemove(goal, index);
         updateUndoRedoButtons();
     }
+
     private void addNewGoal()
     {
         Goal goal = Goal.builder().tasks(ReorderableList.from()).build();
         goalManager.getGoals().add(0, goal);
         pendingNewGoal = goal;
         view(goal);
+    }
+
+    private void exportGoalsToFile()
+    {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setMultiSelectionEnabled(false);
+        chooser.setFileFilter(new FileNameExtensionFilter("JSON files (*.json)", "json"));
+        chooser.setDialogTitle("Export goals to JSON");
+        chooser.setSelectedFile(new java.io.File("goals.json"));
+        int res = chooser.showSaveDialog(this);
+        if (res != JFileChooser.APPROVE_OPTION) { return; }
+        java.io.File file = chooser.getSelectedFile();
+        if (!file.getName().toLowerCase().endsWith(".json"))
+        {
+            file = new java.io.File(file.getParentFile(), file.getName() + ".json");
+        }
+        try (java.io.FileWriter fw = new java.io.FileWriter(file))
+        {
+            String json = goalManager.exportJson(true);
+            fw.write(json);
+            fw.flush();
+            JOptionPane.showMessageDialog(this, "Exported " + goalManager.getGoals().size() + " goal(s) to\n" + file.getAbsolutePath(), "Export Complete", JOptionPane.INFORMATION_MESSAGE);
+        }
+        catch (Exception ex)
+        {
+            JOptionPane.showMessageDialog(this, "Failed to export goals: " + ex.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void importGoalsFromFile()
+    {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setMultiSelectionEnabled(false);
+        chooser.setFileFilter(new FileNameExtensionFilter("JSON files (*.json)", "json"));
+        chooser.setDialogTitle("Import goals from JSON");
+        int res = chooser.showOpenDialog(this);
+        if (res != JFileChooser.APPROVE_OPTION) { return; }
+        java.io.File file = chooser.getSelectedFile();
+        try
+        {
+            String json = new String(java.nio.file.Files.readAllBytes(file.toPath()));
+            goalManager.importJson(json);
+            plugin.warmItemIcons();
+            if (goalPanel != null) {
+                home();
+            } else {
+                goalListPanel.tryBuildList();
+                goalListPanel.refresh();
+                revalidate();
+                repaint();
+            }
+            JOptionPane.showMessageDialog(this, "Imported goals from\n" + file.getAbsolutePath(), "Import Complete", JOptionPane.INFORMATION_MESSAGE);
+        }
+        catch (Exception ex)
+        {
+            JOptionPane.showMessageDialog(this, "Failed to import goals: " + ex.getMessage(), "Import Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }
