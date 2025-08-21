@@ -5,6 +5,7 @@ import com.toofifty.goaltracker.GoalTrackerPlugin;
 import com.toofifty.goaltracker.models.Goal;
 import com.toofifty.goaltracker.models.UndoStack;
 import com.toofifty.goaltracker.models.task.Task;
+import com.toofifty.goaltracker.utils.ReorderableList;
 import com.toofifty.goaltracker.ui.components.ActionBar;
 import com.toofifty.goaltracker.ui.components.ActionBarButton;
 import com.toofifty.goaltracker.ui.components.ListItemPanel;
@@ -71,6 +72,13 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
 
         titlePanel.add(titleTextPanel, BorderLayout.WEST);
 
+        // Re-add "+ Add goal" to the header (right side)
+        JPanel addGoalPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        addGoalPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        ActionBarButton addGoalBtn = new ActionBarButton("+ Add goal", this::addNewGoal);
+        addGoalPanel.add(addGoalBtn);
+        titlePanel.add(addGoalPanel, BorderLayout.EAST);
+
         // Action bar (shared style)
         ActionBar actionBar = new ActionBar();
         actionBar.right().setBorder(new EmptyBorder(0, 4, 0, 0));
@@ -78,8 +86,8 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         // Right-side actions: Undo/Redo
         undoButtonRef = new ActionBarButton("Undo", this::doUndo);
         redoButtonRef = new ActionBarButton("Redo", this::doRedo);
-        actionBar.right().add(undoButtonRef);
-        actionBar.right().add(redoButtonRef);
+        actionBar.left().add(undoButtonRef);
+        actionBar.left().add(redoButtonRef);
 
         ActionBarButton exportButton = new ActionBarButton("Export", () -> {
             // TODO: implement export
@@ -106,10 +114,7 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         JPanel headerContainer = new JPanel(new BorderLayout());
         headerContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
         headerContainer.add(titleWrapper, BorderLayout.NORTH);
-        JPanel actionBarWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        actionBarWrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        actionBarWrapper.add(actionBar);
-        headerContainer.add(actionBarWrapper, BorderLayout.SOUTH);
+        headerContainer.add(actionBar, BorderLayout.SOUTH);
 
         goalListPanel = new ListPanel<>(goalManager.getGoals(),
             (goal) -> {
@@ -292,5 +297,12 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     {
         undoStack.pushRemove(goal, index);
         updateUndoRedoButtons();
+    }
+    private void addNewGoal()
+    {
+        Goal goal = Goal.builder().tasks(ReorderableList.from()).build();
+        goalManager.getGoals().add(0, goal);
+        pendingNewGoal = goal;
+        view(goal);
     }
 }
