@@ -7,6 +7,9 @@ import com.toofifty.goaltracker.models.Goal;
 import com.toofifty.goaltracker.ui.Refreshable;
 
 import javax.swing.*;
+import javax.swing.JMenuItem;
+import javax.swing.event.PopupMenuListener;
+import javax.swing.event.PopupMenuEvent;
 import java.awt.*;
 
 import com.toofifty.goaltracker.ui.components.ListItemPanel;
@@ -29,9 +32,10 @@ public class GoalItemContent extends JPanel implements Refreshable
 
     private final Goal goal;
 
-    private static final int MIN_TITLE_FONT = 11;
-    private static final int MIN_PROGRESS_FONT = 10;
     private JPanel topRow;
+
+    //private static final int PIN_STRIPE_W = 3; // px
+    private static final Color PINNED_BG_COLOR = new Color(45, 45, 45); // darker gray background
 
     GoalItemContent(GoalTrackerPlugin plugin, Goal goal)
     {
@@ -60,7 +64,7 @@ public class GoalItemContent extends JPanel implements Refreshable
         titleStack.setOpaque(false);
         titleStack.add(titleLabel, "label");
         titleStack.add(titleEdit, "edit");
-        topRow.add(titleStack, BorderLayout.WEST);
+        topRow.add(titleStack, BorderLayout.CENTER);
 
         // Swap to edit on label click
         titleLabel.addMouseListener(new MouseAdapter() {
@@ -120,7 +124,51 @@ public class GoalItemContent extends JPanel implements Refreshable
                 if (listItem != null && listItem.getComponentPopupMenu() != null)
                 {
                     java.awt.Point p = SwingUtilities.convertPoint(src, e.getPoint(), listItem);
-                    listItem.getComponentPopupMenu().show(listItem, p.x, p.y);
+                    JPopupMenu menu = listItem.getComponentPopupMenu();
+
+                    // --- Pin / Unpin (temporary additions) ---
+                    JSeparator sep = new JSeparator();
+                    ((JComponent) sep).putClientProperty("pinToggle", Boolean.TRUE);
+                    menu.add(sep);
+
+                    JMenuItem pinToggle = new JMenuItem(goal.isPinned() ? "Unpin" : "Pin");
+                    ((JComponent) pinToggle).putClientProperty("pinToggle", Boolean.TRUE);
+                    pinToggle.addActionListener(ev -> {
+                        goal.setPinned(!goal.isPinned());
+                        try {
+                            plugin.getGoalManager().save();
+                        } catch (Throwable t) {
+                            plugin.getUiStatusManager().refresh(goal);
+                        }
+                        GoalItemContent.this.revalidate();
+                        GoalItemContent.this.repaint();
+                    });
+                    menu.add(pinToggle);
+
+                    PopupMenuListener cleanup = new PopupMenuListener() {
+                        @Override public void popupMenuWillBecomeVisible(PopupMenuEvent e) { }
+                        @Override public void popupMenuCanceled(PopupMenuEvent e) { cleanup(menu, this); }
+                        @Override public void popupMenuWillBecomeInvisible(PopupMenuEvent e) { cleanup(menu, this); }
+                        private void cleanup(JPopupMenu m, PopupMenuListener self) {
+                            // Remove only the components we added this time
+                            java.util.List<java.awt.Component> toRemove = new java.util.ArrayList<>();
+                            for (java.awt.Component c : m.getComponents()) {
+                                if (c instanceof JComponent) {
+                                    Object flag = ((JComponent) c).getClientProperty("pinToggle");
+                                    if (Boolean.TRUE.equals(flag)) {
+                                        toRemove.add(c);
+                                    }
+                                }
+                            }
+                            for (java.awt.Component c : toRemove) {
+                                m.remove(c);
+                            }
+                            m.removePopupMenuListener(self);
+                        }
+                    };
+                    menu.addPopupMenuListener(cleanup);
+
+                    menu.show(listItem, p.x, p.y);
                 }
             }
 
@@ -161,6 +209,7 @@ public class GoalItemContent extends JPanel implements Refreshable
         int done = goal.getComplete().size();
         progressBar.setVisible(total > 0);
         progressBar.setProgress(done, total, color);
+        javax.swing.SwingUtilities.invokeLater(this::updateTitleLabel);
     }
     private static class SlimBar extends JComponent {
         private int done = 0;
@@ -209,7 +258,6 @@ public class GoalItemContent extends JPanel implements Refreshable
             return;
         }
         String ellipsis = "…";
-        int ellW = fm.stringWidth(ellipsis);
         String text = full;
         // Binary-like trim from the end until it fits
         int lo = 0, hi = full.length();
@@ -246,5 +294,18 @@ public class GoalItemContent extends JPanel implements Refreshable
         }
         ((CardLayout) titleStack.getLayout()).show(titleStack, "label");
         updateTitleLabel();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g)
+    {
+        if (goal != null && goal.isPinned())
+        {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setColor(PINNED_BG_COLOR);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.dispose();
+        }
+        super.paintComponent(g);
     }
 }

@@ -22,6 +22,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.util.function.Consumer;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class GoalTrackerPanel extends PluginPanel implements Refreshable
 {
@@ -134,6 +136,7 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
     {
         if (goalPanel == null)
         {
+            sortGoalsForHome();
             goalListPanel.tryBuildList();
             goalListPanel.refresh();
             revalidate();
@@ -167,6 +170,7 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
             }
         }
         removeAll();
+        sortGoalsForHome();
         goalListPanel.tryBuildList();
         goalListPanel.refresh();
         mainPanel.remove(goalListPanel);
@@ -227,6 +231,17 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
             redoButtonRef.setEnabled(undoStack.hasRedo());
             redoButtonRef.setToolTipText(undoStack.hasRedo() ? null : "Nothing to redo");
         }
+    }
+
+    private void sortGoalsForHome()
+    {
+        java.util.List<Goal> goals = goalManager.getGoals();
+        Collections.sort(goals, Comparator
+                .comparing(Goal::isPinned).reversed()
+                .thenComparing(g -> {
+                    String d = g.getDescription();
+                    return d == null ? "" : d.toLowerCase();
+                }));
     }
 
     private void doUndo()
