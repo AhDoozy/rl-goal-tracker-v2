@@ -14,15 +14,24 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.SwingUtilities;
 
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+
 import static com.toofifty.goaltracker.utils.Constants.STATUS_TO_COLOR;
 
 public class GoalItemContent extends JPanel implements Refreshable
 {
-    private final JTextField title = new JTextField();
+    private final JLabel titleLabel = new JLabel();
+    private final JTextField titleEdit = new JTextField();
     private final JLabel progress = new JLabel();
     private final SlimBar progressBar = new SlimBar();
+    private final JPanel titleStack = new JPanel(new CardLayout());
 
     private final Goal goal;
+
+    private static final int MIN_TITLE_FONT = 11;
+    private static final int MIN_PROGRESS_FONT = 10;
+    private JPanel topRow;
 
     GoalItemContent(GoalTrackerPlugin plugin, Goal goal)
     {
@@ -34,33 +43,43 @@ public class GoalItemContent extends JPanel implements Refreshable
         setOpaque(false);
         setBackground(null);
 
-        JPanel topRow = new JPanel(new BorderLayout());
+        topRow = new JPanel(new BorderLayout());
         topRow.setOpaque(false);
-        topRow.add(title, BorderLayout.WEST);
-        // Make goal title editable with standard copy/paste
-        title.setBorder(null);
-        title.setOpaque(false);
-        title.setEditable(true);
-        title.setDragEnabled(true);
-        title.setCaretPosition(0);
-        // Commit edits on Enter and when focus is lost
-        title.addActionListener(e -> {
-            String newText = title.getText();
-            if (newText != null) {
-                goal.setDescription(newText);
-            }
+
+        // Title label (display mode)
+        titleLabel.setBorder(null);
+        titleLabel.setOpaque(false);
+        titleLabel.setFocusable(false);
+        titleLabel.setToolTipText(null);
+
+        // Title edit (edit mode)
+        titleEdit.setBorder(null);
+        titleEdit.setOpaque(false);
+        titleEdit.setDragEnabled(true);
+
+        titleStack.setOpaque(false);
+        titleStack.add(titleLabel, "label");
+        titleStack.add(titleEdit, "edit");
+        topRow.add(titleStack, BorderLayout.WEST);
+
+        // Swap to edit on label click
+        titleLabel.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) { enterEdit(); }
         });
-        title.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusLost(java.awt.event.FocusEvent e) {
-                String newText = title.getText();
-                if (newText != null) {
-                    goal.setDescription(newText);
-                }
-            }
+        // Commit edits on Enter and when focus is lost
+        titleEdit.addActionListener(e -> exitEdit(true));
+        titleEdit.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusLost(java.awt.event.FocusEvent e) { exitEdit(true); }
         });
 
         topRow.add(progress, BorderLayout.EAST);
+
+        // Reserve fixed width for progress like 999/999 so it never clips
+        int progW = getFontMetrics(progress.getFont()).stringWidth("999/999");
+        Dimension progSize = new Dimension(progW, progress.getPreferredSize().height);
+        progress.setPreferredSize(progSize);
+        progress.setMinimumSize(progSize);
+
         add(topRow, BorderLayout.CENTER);
 
         // Slim custom progress bar under the title row
@@ -71,12 +90,15 @@ public class GoalItemContent extends JPanel implements Refreshable
         // Initialize visible text and colors immediately (before first refresh)
         {
             Color color = STATUS_TO_COLOR.get(goal.getStatus());
-            title.setText(goal.getDescription());
-            title.setForeground(color);
-            title.setCaretColor(color);
+            updateTitleLabel();
+            titleEdit.setCaretColor(color);
             progress.setText(goal.getComplete().size() + "/" + goal.getTasks().size());
             progress.setForeground(color);
         }
+
+        topRow.addComponentListener(new ComponentAdapter() {
+            @Override public void componentResized(ComponentEvent e) { updateTitleLabel(); }
+        });
 
         plugin.getUiStatusManager().addRefresher(goal, this::refresh);
 
@@ -107,7 +129,8 @@ public class GoalItemContent extends JPanel implements Refreshable
         };
 
         this.addMouseListener(forwardPopup);
-        title.addMouseListener(forwardPopup);
+        titleLabel.addMouseListener(forwardPopup);
+        titleEdit.addMouseListener(forwardPopup);
         progress.addMouseListener(forwardPopup);
         progressBar.addMouseListener(forwardPopup);
         // Ensure item icon/text initialize on first render (e.g., on login)
@@ -127,9 +150,8 @@ public class GoalItemContent extends JPanel implements Refreshable
     {
         Color color = STATUS_TO_COLOR.get(goal.getStatus());
 
-        title.setText(goal.getDescription());
-        title.setForeground(color);
-        title.setCaretColor(color);
+        updateTitleLabel();
+        titleEdit.setCaretColor(color);
 
         progress.setText(
             goal.getComplete().size() + "/" + goal.getTasks().size());
@@ -167,5 +189,62 @@ public class GoalItemContent extends JPanel implements Refreshable
             g2.fillRect(0, 0, barW, h);
             g2.dispose();
         }
+    }
+
+    private void updateTitleLabel()
+    {
+        if (topRow == null) return;
+        String full = goal.getDescription() != null ? goal.getDescription() : "";
+        titleLabel.setToolTipText(full.isEmpty() ? null : full);
+
+        // Compute available width for title (row width minus progress preferred width and a small gap)
+        int rowW = topRow.getWidth();
+        if (rowW <= 0) { titleLabel.setText(full); return; }
+        int gap = 8;
+        int avail = Math.max(16, rowW - progress.getPreferredSize().width - gap);
+
+        FontMetrics fm = titleLabel.getFontMetrics(titleLabel.getFont());
+        if (fm.stringWidth(full) <= avail) {
+            titleLabel.setText(full);
+            return;
+        }
+        String ellipsis = "…";
+        int ellW = fm.stringWidth(ellipsis);
+        String text = full;
+        // Binary-like trim from the end until it fits
+        int lo = 0, hi = full.length();
+        int cut = hi;
+        while (lo <= hi) {
+            int mid = (lo + hi) >>> 1;
+            String candidate = full.substring(0, Math.max(0, mid)) + ellipsis;
+            if (fm.stringWidth(candidate) <= avail) {
+                cut = mid;
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        text = full.substring(0, Math.max(0, cut)) + ellipsis;
+        titleLabel.setText(text);
+    }
+
+    private void enterEdit()
+    {
+        titleEdit.setText(goal.getDescription() != null ? goal.getDescription() : "");
+        ((CardLayout) titleStack.getLayout()).show(titleStack, "edit");
+        titleEdit.requestFocusInWindow();
+        titleEdit.selectAll();
+    }
+
+    private void exitEdit(boolean save)
+    {
+        if (save) {
+            String newText = titleEdit.getText();
+            if (newText != null) {
+                goal.setDescription(newText);
+            }
+        }
+        ((CardLayout) titleStack.getLayout()).show(titleStack, "label");
+        updateTitleLabel();
     }
 }

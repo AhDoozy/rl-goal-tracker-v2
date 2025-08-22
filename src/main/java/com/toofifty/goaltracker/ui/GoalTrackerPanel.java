@@ -4,6 +4,8 @@ import com.toofifty.goaltracker.GoalManager;
 import com.toofifty.goaltracker.GoalTrackerPlugin;
 import com.toofifty.goaltracker.models.Goal;
 import com.toofifty.goaltracker.models.UndoStack;
+import com.toofifty.goaltracker.presets.GoalPresetRepository;
+import com.toofifty.goaltracker.presets.GoalPresetRepository.Preset;
 import com.toofifty.goaltracker.models.task.Task;
 import com.toofifty.goaltracker.utils.ReorderableList;
 import com.toofifty.goaltracker.ui.components.ActionBar;
@@ -69,10 +71,17 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         titleTextPanel.add(author);
         titlePanel.add(titleTextPanel, BorderLayout.WEST);
 
-        JPanel addGoalPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        JPanel addGoalPanel = new JPanel();
+        addGoalPanel.setLayout(new BoxLayout(addGoalPanel, BoxLayout.Y_AXIS));
         addGoalPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        JPanel addGoalRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        addGoalRow.setBackground(ColorScheme.DARK_GRAY_COLOR);
         ActionBarButton addGoalBtn = new ActionBarButton("+ Add goal", this::addNewGoal);
-        addGoalPanel.add(addGoalBtn);
+        addGoalRow.add(addGoalBtn);
+        addGoalPanel.add(addGoalRow);
+        addGoalPanel.add(Box.createVerticalStrut(4));
+        ActionBarButton addFromPresetBtn = new ActionBarButton("Add from Preset…", this::addFromPreset);
+        addGoalPanel.add(addFromPresetBtn);
         titlePanel.add(addGoalPanel, BorderLayout.EAST);
 
         // Action bar
@@ -327,6 +336,49 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         catch (Exception ex)
         {
             JOptionPane.showMessageDialog(this, "Failed to import goals: " + ex.getMessage(), "Import Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void addFromPreset()
+    {
+        java.util.List<Preset> options = GoalPresetRepository.getAll();
+
+        JComboBox<Preset> combo = new JComboBox<>(options.toArray(new Preset[0]));
+        JTextArea details = new JTextArea(6, 36);
+        details.setWrapStyleWord(true);
+        details.setLineWrap(true);
+        details.setEditable(false);
+        details.setBackground(new JPanel().getBackground());
+
+        java.util.function.Consumer<Preset> update = (opt) -> {
+            if (opt == null) { details.setText(""); return; }
+            int goals = opt.getGoals().size();
+            int tasks = opt.getGoals().stream().mapToInt(g -> g.getTasks().size()).sum();
+            details.setText(opt.getDescription() + "\n\nThis will add " + goals + " goal(s) with " + tasks + " task(s).");
+        };
+        combo.addActionListener(e -> update.accept((Preset) combo.getSelectedItem()));
+        update.accept((Preset) combo.getSelectedItem());
+
+        JPanel panel = new JPanel(new BorderLayout(6,6));
+        panel.add(new JLabel("Choose a preset:"), BorderLayout.NORTH);
+        panel.add(combo, BorderLayout.CENTER);
+        panel.add(new JScrollPane(details), BorderLayout.SOUTH);
+
+        int res = JOptionPane.showConfirmDialog(this, panel, "Add from Preset…", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (res != JOptionPane.OK_OPTION) { return; }
+
+        Preset selected = (Preset) combo.getSelectedItem();
+        if (selected == null) { return; }
+
+        goalManager.addGoals(selected.getGoals());
+
+        if (goalPanel != null) {
+            home();
+        } else {
+            goalListPanel.tryBuildList();
+            goalListPanel.refresh();
+            revalidate();
+            repaint();
         }
     }
 }

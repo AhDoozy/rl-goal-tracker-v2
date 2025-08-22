@@ -27,6 +27,11 @@
 - JSON file filter in Import/Export dialogs for safer file selection.
 - Automatic warming of ItemTask icons on plugin startup and login tick, and after JSON import, ensuring icons display immediately.
 - GoalsChangedListener system in GoalManager to notify panels and auto-refresh home view when goals are saved or loaded.
+- Preset Goal Lists: Added “Add from Preset…” button in the Goal Tracker panel, with initial presets (Quest Cape Core, Early Game Ironman). Presets now expand to include prerequisite quests automatically.
+- Centralized presets into a new `GoalPresetRepository` class for easier management and expansion.
+- Automatic prerequisite expansion for presets leverages the same logic as the quest right-click **Add prereqs** option.
+- Ellipsized titles: Goal cards and Task rows now ellipsize long titles with `…` and show full text on hover via tooltip.
+- Click-to-edit: Goal titles and ManualTask descriptions can now be edited by clicking their label; label swaps to an inline text field and saves on Enter or blur.
 
 ### Changed
 - Pre-req button made more compact (~25% smaller).
@@ -70,6 +75,9 @@
 - Right-click menus refactored so Tasks build their own menu and Goals build theirs, preventing duplicate/unusable items.
 - ActionBar spacing refined between Redo and Export buttons to prevent overlap and fit Import button.
 - Plugin startup now triggers item icon warm-up so icons are ready before login.
+- “+ Add goal” and “Add from Preset…” buttons now stacked vertically in the Goal Tracker panel header for cleaner layout.
+- Goal card progress text (e.g., “1/10”) reserved fixed width and no longer clips; typography is consistent and does not shrink.
+- Task rows updated with consistent styling and ellipsis/edit behavior, matching Goal cards for a unified UI.
 
 ### Fixed
 - Home panel Undo/Redo buttons removed; these controls now exist only in Goal view.
