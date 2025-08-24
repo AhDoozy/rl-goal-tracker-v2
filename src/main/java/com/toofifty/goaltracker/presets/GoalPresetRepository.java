@@ -2,6 +2,7 @@ package com.toofifty.goaltracker.presets;
 
 import com.toofifty.goaltracker.models.Goal;
 import com.toofifty.goaltracker.models.task.ItemTask;
+import com.toofifty.goaltracker.models.task.ManualTask;
 import com.toofifty.goaltracker.models.task.QuestTask;
 import com.toofifty.goaltracker.models.task.SkillLevelTask;
 import com.toofifty.goaltracker.utils.ReorderableList;
@@ -52,6 +53,9 @@ public class GoalPresetRepository {
         list.add(buildEarlyIronman());
         list.add(buildMidIronman());
         list.add(buildLateIronman());
+        list.add(buildFullVoidArmor());
+        list.add(buildFastTravelUnlocks());
+        list.add(buildFreeToPlayQuests());
         return list;
     }
 
@@ -257,6 +261,28 @@ public class GoalPresetRepository {
                 "Ladlor Ironman Progression",
                 "A multi-lane item-based progression inspired by Ladlor's Ironman chart.",
                 goals
+        );
+    }
+
+    // Fast travel unlocks (not a full preset, just for reference)
+    private static List<QuestTask> buildFastTravelUnlocks() {
+        return Arrays.asList(
+            // Teleport items from quests
+            QuestTask.builder().quest(Quest.MONKEY_MADNESS_II).build(), // Royal seed pod
+            QuestTask.builder().quest(Quest.A_TASTE_OF_HOPE).build(), // Drakan's medallion teleports in Morytania
+            QuestTask.builder().quest(Quest.DESERT_TREASURE_I).build(), // Ring of visibility (not a teleport itself, but for fairy rings)
+            QuestTask.builder().quest(Quest.FAIRYTALE_II__CURE_A_QUEEN).build(), // Fairy rings
+            QuestTask.builder().quest(Quest.LUNAR_DIPLOMACY).build(), // Lunar spellbook teleport
+            QuestTask.builder().quest(Quest.ANIMAL_MAGNETISM).build(), // Ectophial
+            QuestTask.builder().quest(Quest.ANCIENT_CAVERN).build(), // Games necklace (Barbarian Outpost)
+            // Other travel networks
+            QuestTask.builder().quest(Quest.THE_GRAND_TREE).build(), // Gnome glider network
+            QuestTask.builder().quest(Quest.TREE_GNOME_VILLAGE).build(), // Spirit tree network
+            QuestTask.builder().quest(Quest.THE_GIANT_DWARF).build(), // Keldagrim mine carts
+            QuestTask.builder().quest(Quest.ANOTHER_SLICE_OF_HAM).build(), // Dorgesh-Kaan ↔ Keldagrim train
+            QuestTask.builder().quest(Quest.KINGS_RANSOM).build(), // Camelot teleport
+            QuestTask.builder().quest(Quest.PLAGUE_CITY).build(), // Ardougne teleport
+            QuestTask.builder().quest(Quest.RUM_DEAL).build() // Harmony Island teleport (Morytania)
         );
     }
     private static Preset buildLadlorMelee() {
@@ -577,5 +603,95 @@ public class GoalPresetRepository {
                 ))
                 .build();
         return new Preset("Late Ironman Progression", "Stats, gear, and quest goals for late game Ironman.", Arrays.asList(late));
+    }
+    private static Preset buildFullVoidArmor() {
+        Goal voidSet = Goal.builder()
+                .description("Full Void Armor Set")
+                .tasks(ReorderableList.from(
+                        ItemTask.builder().itemId(VOID_KNIGHT_TOP).itemName("Void knight top").quantity(1).build(),
+                        ItemTask.builder().itemId(VOID_KNIGHT_ROBE).itemName("Void knight robe").quantity(1).build(),
+                        ItemTask.builder().itemId(VOID_KNIGHT_GLOVES).itemName("Void knight gloves").quantity(1).build(),
+                        ItemTask.builder().itemId(VOID_MELEE_HELM).itemName("Void melee helm").quantity(1).build(),
+                        ItemTask.builder().itemId(VOID_RANGER_HELM).itemName("Void ranger helm").quantity(1).build(),
+                        ItemTask.builder().itemId(VOID_MAGE_HELM).itemName("Void mage helm").quantity(1).build()
+                ))
+                .build();
+        return new Preset("Full Void Armor", "All base Void pieces: top, robe, gloves, and all three helms.", Arrays.asList(voidSet));
+    }
+    private static Preset buildFreeToPlayQuests() {
+        Goal f2p = Goal.builder()
+                .description("All Free-to-Play Quests")
+                .tasks(ReorderableList.from(
+                        // Suggested quick-to-hard order
+                        QuestTask.builder().quest(Quest.COOKS_ASSISTANT).build(),
+                        QuestTask.builder().quest(Quest.SHEEP_SHEARER).build(),
+                        QuestTask.builder().quest(Quest.ROMEO__JULIET).build(),
+                        QuestTask.builder().quest(Quest.THE_RESTLESS_GHOST).build(),
+                        QuestTask.builder().quest(Quest.IMP_CATCHER).build(),
+                        QuestTask.builder().quest(Quest.DORICS_QUEST).build(),
+                        QuestTask.builder().quest(Quest.GOBLIN_DIPLOMACY).build(),
+                        QuestTask.builder().quest(Quest.ERNEST_THE_CHICKEN).build(),
+                        QuestTask.builder().quest(Quest.THE_KNIGHTS_SWORD).build(),
+                        QuestTask.builder().quest(Quest.PIRATES_TREASURE).build(),
+                        QuestTask.builder().quest(Quest.PRINCE_ALI_RESCUE).build(),
+                        QuestTask.builder().quest(Quest.BLACK_KNIGHTS_FORTRESS).build(),
+                        QuestTask.builder().quest(Quest.VAMPYRE_SLAYER).build(),
+                        QuestTask.builder().quest(Quest.DEMON_SLAYER).build(),
+                        QuestTask.builder().quest(Quest.RUNE_MYSTERIES).build(),
+                        QuestTask.builder().quest(Quest.MISTHALIN_MYSTERY).build(),
+                        QuestTask.builder().quest(Quest.THE_CORSAIR_CURSE).build(),
+                        // Note: Shield of Arrav needs a partner
+                        ManualTask.builder().description("Find a partner for Shield of Arrav (Phoenix/Black Arm) or coordinate in a clan chat").build(),
+                        QuestTask.builder().quest(Quest.SHIELD_OF_ARRAV).build(),
+                        // Capstone F2P quest
+                        QuestTask.builder().quest(Quest.DRAGON_SLAYER_I).build()
+                ))
+                .build();
+        return new Preset("Free-to-Play Quests", "Every F2P quest in OSRS (20 total) as of today.", Arrays.asList(f2p));
+    }
+    private static Preset buildFastTravelUnlocks() {
+        Goal travel = Goal.builder()
+                .description("Fast Travel Unlocks (Quest-gated)")
+                .tasks(ReorderableList.from(
+                        // Spirit trees & gliders
+                        QuestTask.builder().quest(Quest.TREE_GNOME_VILLAGE).build(),
+                        QuestTask.builder().quest(Quest.THE_GRAND_TREE).build(),
+                        // Fairy rings (partial completion allows use with dramen/lunar staff)
+                        QuestTask.builder().quest(Quest.FAIRYTALE_II__CURE_A_QUEEN).build(),
+                        // Balloons
+                        QuestTask.builder().quest(Quest.ENLIGHTENED_JOURNEY).build(),
+                        // City teleport spells unlocked by quests
+                        QuestTask.builder().quest(Quest.WATCHTOWER).build(),
+                        QuestTask.builder().quest(Quest.PLAGUE_CITY).build(),
+                        QuestTask.builder().quest(Quest.EADGARS_RUSE).build(),
+                        // Teleport items from quests
+                        QuestTask.builder().quest(Quest.GHOSTS_AHOY).build(), // Ectophial
+                        QuestTask.builder().quest(Quest.THE_DIG_SITE).build(), // Digsite pendant access
+                        QuestTask.builder().quest(Quest.BONE_VOYAGE).build(), // Fossil Island travel
+                        QuestTask.builder().quest(Quest.MONKEY_MADNESS_II).build(), // Royal seed pod
+                        QuestTask.builder().quest(Quest.A_TASTE_OF_HOPE).build(), // Drakan's medallion teleports in Morytania
+                        // Kourend memoirs teleports
+                        QuestTask.builder().quest(Quest.CLIENT_OF_KOUREND).build(),
+                        QuestTask.builder().quest(Quest.THE_DEPTHS_OF_DESPAIR).build(),
+                        QuestTask.builder().quest(Quest.THE_QUEEN_OF_THIEVES).build(),
+                        QuestTask.builder().quest(Quest.TALE_OF_THE_RIGHTEOUS).build(),
+                        QuestTask.builder().quest(Quest.THE_FORSAKEN_TOWER).build(),
+                        QuestTask.builder().quest(Quest.THE_ASCENT_OF_ARCEUUS).build(),
+                        // Other travel networks
+                        QuestTask.builder().quest(Quest.EAGLES_PEAK).build(), // Eagle transport
+                        QuestTask.builder().quest(Quest.SHILO_VILLAGE).build(), // Brimhaven–Shilo carts
+                        QuestTask.builder().quest(Quest.THE_GIANT_DWARF).build(), // Keldagrim mine carts
+                        QuestTask.builder().quest(Quest.ANOTHER_SLICE_OF_HAM).build(), // Dorgesh-Kaan ↔ Keldagrim train
+                        QuestTask.builder().quest(Quest.THE_FREMENNIK_TRIALS).build(), // Enchanted lyre to Rellekka
+                        // Spellbook unlocks with many teleports
+                        QuestTask.builder().quest(Quest.DESERT_TREASURE_I).build(), // Ancient Magicks
+                        QuestTask.builder().quest(Quest.LUNAR_DIPLOMACY).build() // Lunar teleports
+                ))
+                .build();
+        return new Preset(
+                "Fast Travel Unlocks",
+                "Quests that unlock major transportation methods: spirit trees, gliders, fairy rings, balloons, city teleports, carts, memoirs, seed pod, and more.",
+                Arrays.asList(travel)
+        );
     }
 }

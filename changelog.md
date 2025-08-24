@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-### Added
+-### Added
 - Quest prerequisites button: Each quest task now has an **Add prereqs** button to insert its prerequisites  
   directly beneath it.
 - Shift+Click removal: Shift+Click a task to remove it and all its indented children at once.
@@ -41,6 +41,9 @@
 - Commented out Ladlor presets from default loading in GoalPresetRepository to simplify active preset list.
 - Fixed incorrect ItemID constants for Salve amulet (ei) in Slayer & Undead presets (SALVE_AMULET_EI).
 - Removed stray selection marker and corrected field declaration in GoalPresetRepository.
+- Added Full Void Armor preset (base Void top, robe, gloves, melee/range/mage helms).
+- Added Free-to-Play Quests preset including all 20 F2P quests, ordered from quick to long, with partner note for Shield of Arrav.
+- Added Fast Travel Unlocks preset covering quests that unlock teleport networks, transportation methods, and teleport items (spirit trees, gliders, fairy rings, balloons, Kourend memoirs, Drakan's medallion, etc.).
 
 ### Changed
 - Pre-req button made more compact (~25% smaller).
@@ -88,7 +91,7 @@
 - Goal card progress text (e.g., “1/10”) reserved fixed width and no longer clips; typography is consistent and does not shrink.
 - Task rows updated with consistent styling and ellipsis/edit behavior, matching Goal cards for a unified UI.
 
-### Fixed
+-### Fixed
 - Home panel Undo/Redo buttons removed; these controls now exist only in Goal view.
 - ActionBarButton painting fixed: clears background correctly, text always drawn on top, and hover state no longer causes overlapping artifacts.
 - GoalTrackerPanel `home()` method fixed so returning from Goal view refreshes and displays the goal list instead of a blank panel.
