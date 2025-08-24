@@ -22,7 +22,12 @@ import java.awt.event.ComponentEvent;
 
 import static com.toofifty.goaltracker.utils.Constants.STATUS_TO_COLOR;
 
-public class GoalItemContent extends JPanel implements Refreshable
+/**
+ * UI component for rendering a Goal in a list.
+ * Shows the title (editable), progress count, and a slim progress bar.
+ * Also supports pinning, context menus, and refresh on goal status change.
+ */
+public final class GoalItemContent extends JPanel implements Refreshable
 {
     private final JLabel titleLabel = new JLabel();
     private final JTextField titleEdit = new JTextField();

@@ -23,7 +23,11 @@ import lombok.Setter;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.components.FlatTextField;
 
-public class EditableInput extends JPanel
+/**
+ * Editable text field with Save, Cancel, and Edit controls.
+ * Provides copy/paste shortcuts and context menu support.
+ */
+public final class EditableInput extends JPanel
 {
 
     private static final Border INPUT_BOTTOM_BORDER = new CompoundBorder(

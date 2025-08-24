@@ -10,7 +10,11 @@ import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
-public class TextButton extends JLabel
+/**
+ * Small clickable label styled as a button, used for text-based actions.
+ * Supports hover effects and consumer-based click listeners.
+ */
+public final class TextButton extends JLabel
 {
     private Color mainColor = ColorScheme.PROGRESS_COMPLETE_COLOR;
 

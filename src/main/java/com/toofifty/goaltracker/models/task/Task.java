@@ -11,6 +11,10 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
+/**
+ * Base class for all goal tasks.
+ * Provides status tracking, indent level management, and type identification.
+ */
 public abstract class Task
 {
     @Builder.Default

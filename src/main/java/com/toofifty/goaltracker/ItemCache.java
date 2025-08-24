@@ -11,7 +11,11 @@ import net.runelite.api.Item;
 import net.runelite.client.game.ItemManager;
 
 @Singleton
-public class ItemCache
+/**
+ * Tracks player inventory contents across sessions.
+ * Persists item totals and note-link mappings for offline use.
+ */
+public final class ItemCache
 {
     private Map<Integer, Item[]> inventories;
     private Map<Integer, Integer> itemTotals;

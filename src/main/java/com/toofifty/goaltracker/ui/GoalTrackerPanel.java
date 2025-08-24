@@ -25,7 +25,12 @@ import java.util.function.Consumer;
 import java.util.Collections;
 import java.util.Comparator;
 
-public class GoalTrackerPanel extends PluginPanel implements Refreshable
+/**
+ * Main plugin panel for Goal Tracker v2.
+ * Shows header (title, add/import/export controls), goal list with undo/redo,
+ * and switches between home view and individual goal panels.
+ */
+public final class GoalTrackerPanel extends PluginPanel implements Refreshable
 {
     private final JPanel mainPanel = new JPanel(new BorderLayout());
     private final ListPanel<Goal> goalListPanel;

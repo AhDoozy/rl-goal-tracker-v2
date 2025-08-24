@@ -30,8 +30,12 @@ import javax.swing.text.JTextComponent;
 
 
 
-
-public class ItemTaskInput extends TaskInput
+/**
+ * Input panel for creating Item tasks.
+ * Provides search with close overlay, quantity field with k/m suffix support,
+ * and automatic task submission on selection.
+ */
+public final class ItemTaskInput extends TaskInput
 {
     private final ItemManager itemManager;
     private final ClientThread clientThread;

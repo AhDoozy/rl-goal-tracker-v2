@@ -12,7 +12,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class QuestRequirements
+/**
+ * Static lookup of quest prerequisites (quests + skill levels) and a helper to
+ * expand nested requirements with appropriate indent levels.
+ */
+public final class QuestRequirements
 {
     // Map of quests to their requirements (quests and skills)
     private static final Map<Quest, List<Task>> REQUIREMENT_MAP;

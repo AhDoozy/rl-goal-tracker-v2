@@ -7,10 +7,14 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import net.runelite.api.Quest;
 
+/**
+ * Task representing completion of a quest.
+ * Stores the RuneLite Quest reference and returns its name as label.
+ */
 @Getter
 @Setter
 @SuperBuilder
-public class QuestTask extends Task
+public final class QuestTask extends Task
 {
     @SerializedName("quest_id")
     private Quest quest;

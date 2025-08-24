@@ -15,7 +15,11 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-public class GoalSerializer
+/**
+ * Handles JSON serialization and deserialization of Goals.
+ * Uses custom adapters for Task, Skill, and Quest types with consistent field naming.
+ */
+public final class GoalSerializer
 {	
     @Inject
 	private Gson gson;

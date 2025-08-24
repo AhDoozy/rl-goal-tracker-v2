@@ -5,8 +5,9 @@ import java.lang.reflect.Method;
 
 /**
  * Action for toggling a task's completion state.
+ * Uses reflection to avoid a hard dependency on the Status enum.
  */
-public class ToggleCompleteAction implements ActionHistory.Action
+public final class ToggleCompleteAction implements ActionHistory.Action
 {
     private final Task task;
     private final boolean oldValue;

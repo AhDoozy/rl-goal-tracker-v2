@@ -16,7 +16,11 @@ import java.awt.Container;
 import com.toofifty.goaltracker.models.ActionHistory;
 import com.toofifty.goaltracker.models.ReorderTaskAction;
 
-public class ListTaskPanel extends ListItemPanel<Task>
+/**
+ * Task row panel with context menu (move, indent, toggle),
+ * cascading child handling, and shift-click remove support.
+ */
+public final class ListTaskPanel extends ListItemPanel<Task>
 {
     private TaskItemContent taskContent;
 

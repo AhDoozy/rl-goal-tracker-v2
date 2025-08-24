@@ -35,7 +35,12 @@ import java.util.stream.IntStream;
 
 @Slf4j
 @PluginDescriptor(name = "Goal Tracker", description = "Keep track of your goals and complete them automatically")
-public class GoalTrackerPlugin extends Plugin
+/**
+ * Main entry point for the Goal Tracker plugin.
+ * Handles lifecycle (startup/shutdown), UI registration, and listens for
+ * RuneLite events to update tasks and goals automatically.
+ */
+public final class GoalTrackerPlugin extends Plugin
 {
     public static final int[] PLAYER_INVENTORIES = {
         InventoryID.INVENTORY.getId(),

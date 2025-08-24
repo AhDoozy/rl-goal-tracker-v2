@@ -14,7 +14,10 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Dimension;
 
-public class ActionBarButton extends JButton
+/**
+ * Styled small button used inside ActionBar, with hover background effect.
+ */
+public final class ActionBarButton extends JButton
 {
     private boolean hover;
 

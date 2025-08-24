@@ -7,8 +7,12 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Type;
 
+/**
+ * Gson adapter for polymorphic Task serialization.
+ * Adds a "type" field and deserializes into the correct Task subclass.
+ */
 @Slf4j
-public class TaskAdapter implements JsonSerializer<Task>, JsonDeserializer<Task> {
+public final class TaskAdapter implements JsonSerializer<Task>, JsonDeserializer<Task> {
 
     @Override
     public JsonElement serialize(Task src, Type typeOfSrc, JsonSerializationContext context) {

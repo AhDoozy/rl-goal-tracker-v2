@@ -7,6 +7,10 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.Alpha;
 import java.awt.Color;
 
+/**
+ * RuneLite config group for Goal Tracker plugin.
+ * Stores serialized goals, item cache data, and completion message color.
+ */
 @ConfigGroup("goaltracker")
 public interface GoalTrackerConfig extends Config
 {

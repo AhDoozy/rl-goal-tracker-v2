@@ -11,8 +11,11 @@ import java.awt.image.BufferedImage;
 @Setter
 @Getter
 @SuperBuilder
-public class
-ItemTask extends Task
+/**
+ * Task representing acquisition of an item.
+ * Tracks item ID, name, desired quantity, acquired count, and cached icon.
+ */
+public final class ItemTask extends Task
 {
     private transient BufferedImage cachedIcon;
     private int quantity;

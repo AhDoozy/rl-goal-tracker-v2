@@ -32,7 +32,10 @@ import net.runelite.client.util.Text;
  *  - Custom up/down arrow icons loaded from resources (combo_arrow_down.png / combo_arrow_up.png)
  *  - Compact mode (~10% smaller font), or arbitrary font scaling via setFontScale
  */
-public class ComboBox<T> extends JComboBox<T>
+/**
+ * Generic RuneLite-styled combo box with optional formatting, custom arrow icons, and font scaling.
+ */
+public final class ComboBox<T> extends JComboBox<T>
 {
     private Function<T, String> formatter = null;
 

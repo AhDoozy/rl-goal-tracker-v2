@@ -31,7 +31,12 @@ import java.awt.CardLayout;
 
 import com.toofifty.goaltracker.models.task.ManualTask;
 
-public class TaskItemContent extends JPanel implements Refreshable
+/**
+ * UI component for rendering a single Task row inside a Goal.
+ * Shows icon, title (editable for manual tasks), right-click context menu,
+ * and handles refreshing on task updates.
+ */
+public final class TaskItemContent extends JPanel implements Refreshable
 {
     private final Task task;
     private final Goal goal;

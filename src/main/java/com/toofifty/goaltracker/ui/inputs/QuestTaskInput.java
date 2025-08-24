@@ -19,7 +19,11 @@ import java.util.ArrayList;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
-public class QuestTaskInput extends TaskInput
+/**
+ * Input panel for creating Quest tasks.
+ * Provides a searchable dropdown with RuneScape UF font and Enter-to-submit support.
+ */
+public final class QuestTaskInput extends TaskInput
 {
     private final List<Quest> allQuests;
     private Quest bestMatch;

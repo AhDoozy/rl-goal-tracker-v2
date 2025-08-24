@@ -9,7 +9,11 @@ import net.runelite.api.Skill;
 @Getter
 @Setter
 @SuperBuilder
-public class SkillXpTask extends Task
+/**
+ * Task representing earning a target XP amount in a skill.
+ * Stores the RuneLite Skill and required XP.
+ */
+public final class SkillXpTask extends Task
 {
     private Skill skill;
     private int xp;

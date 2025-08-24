@@ -25,7 +25,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.BorderFactory;
 import net.runelite.client.ui.ColorScheme;
 
-public class GoalPanel extends JPanel implements Refreshable
+/**
+ * Panel showing a single Goal: header, action bar (undo/redo, prereqs),
+ * editable description, and the task list with add-new controls.
+ */
+public final class GoalPanel extends JPanel implements Refreshable
 {
     private final GoalTrackerPlugin plugin;
     private final Goal goal;
