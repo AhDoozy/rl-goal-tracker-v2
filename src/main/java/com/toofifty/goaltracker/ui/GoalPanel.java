@@ -39,6 +39,7 @@ public class GoalPanel extends JPanel implements Refreshable
     private final ActionHistory actionHistory = new ActionHistory();
     private ActionBarButton undoButton;
     private ActionBarButton redoButton;
+    private ActionBarButton prereqsButton;
 
     GoalPanel(GoalTrackerPlugin plugin, Goal goal, Runnable closeListener)
     {
@@ -52,18 +53,33 @@ public class GoalPanel extends JPanel implements Refreshable
         headerPanel.setBorder(new EmptyBorder(0, 0, 8, 0));
         add(headerPanel, BorderLayout.NORTH);
 
-        // Goal List Action Bar: Back (left), Undo/Redo (right)
-        ActionBar actionBar = new ActionBar();
-
+        // Back row above the action bar
+        JPanel backRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        backRow.setBackground(ColorScheme.DARK_GRAY_COLOR);
         ActionBarButton backButton = new ActionBarButton("Back", closeListener::run);
+        backRow.add(backButton);
+
+        // Action bar with Add pre-reqs on the left of Undo/Redo
+        ActionBar actionBar = new ActionBar();
+        prereqsButton = new ActionBarButton("Add pre-reqs", this::addPrereqs);
+        prereqsButton.setToolTipText("Add prerequisite quests/tasks for this goal");
+        prereqsButton.setEnabled(true);
+
         undoButton = new ActionBarButton("Undo", this::doUndo);
         redoButton = new ActionBarButton("Redo", this::doRedo);
 
-        actionBar.left().add(backButton);
-        actionBar.right().add(undoButton);
-        actionBar.right().add(redoButton);
+        actionBar.left().add(prereqsButton);
+        actionBar.left().add(undoButton);
+        actionBar.left().add(redoButton);
 
-        headerPanel.add(actionBar, BorderLayout.NORTH);
+        // Stack back row above the action bar in the header's NORTH
+        JPanel headerTop = new JPanel();
+        headerTop.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        headerTop.setLayout(new BoxLayout(headerTop, BoxLayout.Y_AXIS));
+        headerTop.add(backRow);
+        headerTop.add(actionBar);
+
+        headerPanel.add(headerTop, BorderLayout.NORTH);
 
         updateUndoRedoButtons();
 
@@ -262,5 +278,65 @@ public class GoalPanel extends JPanel implements Refreshable
         actionHistory.redo();
         refreshTaskList();
         updateUndoRedoButtons();
+    }
+
+    private void addPrereqs()
+    {
+        int processed = 0;
+        int invoked = 0;
+
+        java.util.List<TaskItemContent> contents = new java.util.ArrayList<>();
+        collectTaskItemContents(taskListPanel, contents);
+
+        for (TaskItemContent tic : contents)
+        {
+            Task t = tic.getTask();
+            if (t != null && t.getType() == TaskType.QUEST)
+            {
+                processed++;
+                if (tic.addPrereqsFromContext())
+                {
+                    invoked++;
+                }
+            }
+        }
+
+        // Refresh UI/state after batch
+        plugin.setValidateAll(true);
+        plugin.getUiStatusManager().refresh(goal);
+        refreshTaskList();
+        updateUndoRedoButtons();
+
+        if (processed == 0)
+        {
+            JOptionPane.showMessageDialog(this,
+                    "No quest tasks found in this goal.",
+                    "Add pre-reqs",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        if (invoked == 0)
+        {
+            JOptionPane.showMessageDialog(this,
+                    "All pre-reqs have already been added.\n",
+                    "Add pre-reqs",
+                    JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private static void collectTaskItemContents(Component root, java.util.List<TaskItemContent> out)
+    {
+        if (root instanceof TaskItemContent)
+        {
+            out.add((TaskItemContent) root);
+        }
+        if (root instanceof Container)
+        {
+            for (Component child : ((Container) root).getComponents())
+            {
+                collectTaskItemContents(child, out);
+            }
+        }
     }
 }

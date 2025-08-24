@@ -565,4 +565,50 @@ public class ListTaskPanel extends ListItemPanel<Task>
             repaint();
         }
     }
+    /**
+     * Programmatically add quest prerequisites using the same logic as the context menu action.
+     * This lets callers (e.g., presets) trigger prereq insertion without simulating a right-click.
+     */
+    public static void addPrereqsForTask(ReorderableList<Task> list, Task item)
+    {
+        if (!(item instanceof com.toofifty.goaltracker.models.task.QuestTask)) {
+            return;
+        }
+        com.toofifty.goaltracker.models.task.QuestTask questTask = (com.toofifty.goaltracker.models.task.QuestTask) item;
+        int baseIndent = item.getIndentLevel();
+
+        // Gather existing children under this task to avoid duplicates
+        java.util.Set<String> existingKeys = new java.util.HashSet<>();
+        int parentIndex = list.indexOf(item);
+        for (int i = parentIndex + 1; i < list.size(); i++) {
+            Task child = list.get(i);
+            if (child.getIndentLevel() <= baseIndent) break;
+            existingKeys.add(child.getClass().getName() + "|" + child.toString());
+        }
+
+        java.util.List<com.toofifty.goaltracker.models.task.Task> raw = QuestRequirements.getRequirements(questTask.getQuest(), baseIndent + 1);
+        if (raw == null || raw.isEmpty()) {
+            return;
+        }
+
+        // Filter out any already-present entries
+        java.util.List<com.toofifty.goaltracker.models.task.Task> filtered = new java.util.ArrayList<>();
+        for (com.toofifty.goaltracker.models.task.Task t : raw) {
+            String key = t.getClass().getName() + "|" + t.toString();
+            if (!existingKeys.contains(key)) {
+                filtered.add(t);
+            }
+        }
+
+        if (filtered.isEmpty()) {
+            return;
+        }
+
+        // Insert directly after the parent item, preserving order from QuestRequirements
+        int insertIndex = list.indexOf(item);
+        for (com.toofifty.goaltracker.models.task.Task prereq : filtered) {
+            list.add(insertIndex + 1, prereq);
+            insertIndex++;
+        }
+    }
 }

@@ -21,6 +21,10 @@
 - Export and Import functionality: save your goals to a JSON file and import them back with full UI refresh.
 - Automatic warming of item icons so they load at startup, on login, and after import.
 - GoalsChangedListener system to auto-refresh the Home panel when goals change.
+- Preset Goal Lists: add goals from built-in presets (Quest Cape Core, Early Game Ironman) via a new “Add from Preset…” button.
+- Presets automatically expand quest prerequisites using the existing right-click prereq logic.
+- Goal titles and ManualTask descriptions now support click-to-edit with inline text fields.
+- Long goal and task titles are ellipsized with … and show full text on hover.
 
 ### ♻️ Redesigned Features
 
@@ -47,6 +51,9 @@
 - Context menu entries rebuilt dynamically before opening to always reflect the latest state.
 - Task and goal content now force an initial refresh so icons and text render correctly at login.
 - Refined ActionBar spacing to ensure Export and Import buttons fit without overlap.
+- Progress text (e.g., “1/10”) on goal cards now has a reserved width and never clips.
+- + Add goal and Add from Preset buttons restyled and stacked vertically for cleaner layout.
+- Task rows updated to match goal cards with ellipsized titles and consistent styling.
 
 </details>
 

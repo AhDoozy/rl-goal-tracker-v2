@@ -27,6 +27,20 @@
 - JSON file filter in Import/Export dialogs for safer file selection.
 - Automatic warming of ItemTask icons on plugin startup and login tick, and after JSON import, ensuring icons display immediately.
 - GoalsChangedListener system in GoalManager to notify panels and auto-refresh home view when goals are saved or loaded.
+- Preset Goal Lists: Added “Add from Preset…” button in the Goal Tracker panel, with initial presets (Quest Cape Core, Early Game Ironman). Presets now expand to include prerequisite quests automatically.
+- Centralized presets into a new `GoalPresetRepository` class for easier management and expansion.
+- Automatic prerequisite expansion for presets leverages the same logic as the quest right-click **Add prereqs** option.
+- Ellipsized titles: Goal cards and Task rows now ellipsize long titles with `…` and show full text on hover via tooltip.
+- Click-to-edit: Goal titles and ManualTask descriptions can now be edited by clicking their label; label swaps to an inline text field and saves on Enter or blur.
+- Added per-lane Ladlor presets (Melee, Ranged, Magic, Utility, Void Set, God Capes, Crystal & Bowfa, Jewelry & Boots, Slayer & Undead, Imbued Rings, God Wars Armor, Elite Void, Prayer Scrolls, Raids Uniques, Milestones & Capes), alongside the full combined Ladlor Ironman preset.
+- Added Early, Mid, and Late Ironman presets as consolidated single-goal lists rather than split by category.
+- Added a new **Add pre-reqs** button to the Goal view header, next to Undo/Redo. This button triggers the same logic as the quest right-click **Add prerequisites** option, but applies to all quest tasks in the goal at once.
+- Converted all Early, Mid, and Late Ironman preset skill milestones from ManualTask to SkillLevelTask for accurate level tracking.
+- Expanded Early Ironman preset with Birdhouse run unlocks (Dig Site, Bone Voyage, Hunter 5, Crafting 8, Construction 16) and Seaweed run unlock (Farming 23).
+- Reworked Early, Mid, and Late Ironman presets with more appropriate content and progression pacing (e.g., Early emphasizes graceful set and mobility, Mid includes Iban’s staff, Ava’s, Barrows gloves, Late includes Blowpipe, Bowfa, Bandos, endgame quests).
+- Commented out Ladlor presets from default loading in GoalPresetRepository to simplify active preset list.
+- Fixed incorrect ItemID constants for Salve amulet (ei) in Slayer & Undead presets (SALVE_AMULET_EI).
+- Removed stray selection marker and corrected field declaration in GoalPresetRepository.
 
 ### Changed
 - Pre-req button made more compact (~25% smaller).
@@ -70,6 +84,9 @@
 - Right-click menus refactored so Tasks build their own menu and Goals build theirs, preventing duplicate/unusable items.
 - ActionBar spacing refined between Redo and Export buttons to prevent overlap and fit Import button.
 - Plugin startup now triggers item icon warm-up so icons are ready before login.
+- “+ Add goal” and “Add from Preset…” buttons now stacked vertically in the Goal Tracker panel header for cleaner layout.
+- Goal card progress text (e.g., “1/10”) reserved fixed width and no longer clips; typography is consistent and does not shrink.
+- Task rows updated with consistent styling and ellipsis/edit behavior, matching Goal cards for a unified UI.
 
 ### Fixed
 - Home panel Undo/Redo buttons removed; these controls now exist only in Goal view.

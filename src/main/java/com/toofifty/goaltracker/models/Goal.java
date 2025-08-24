@@ -25,6 +25,9 @@ public class Goal
     @Builder.Default
     private int displayOrder = -1;
 
+    @Builder.Default
+    private boolean pinned = false;
+
     @SerializedName("items")
     @Builder.Default
     private ReorderableList<Task> tasks = new ReorderableList<>();

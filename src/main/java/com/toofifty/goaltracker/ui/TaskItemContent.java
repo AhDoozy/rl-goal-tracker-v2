@@ -7,6 +7,7 @@ import com.toofifty.goaltracker.services.TaskIconService;
 import com.toofifty.goaltracker.models.task.QuestTask;
 import com.toofifty.goaltracker.utils.QuestRequirements;
 import java.util.List;
+import java.util.Locale;
 
 import com.toofifty.goaltracker.ui.components.ListPanel;
 import com.toofifty.goaltracker.ui.components.ListItemPanel;
@@ -24,13 +25,23 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import com.toofifty.goaltracker.models.enums.Status;
 
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.CardLayout;
+
+import com.toofifty.goaltracker.models.task.ManualTask;
+
 public class TaskItemContent extends JPanel implements Refreshable
 {
     private final Task task;
     private final Goal goal;
     private final TaskIconService iconService;
     private final JLabel titleLabel = new JLabel();
+    private final JTextField titleEdit = new JTextField();
+    private final JPanel titleStack = new JPanel(new CardLayout());
     private final JLabel iconLabel = new JLabel();
+    private JPanel iconWrapper;
+    private boolean titleEditable;
 
     private final GoalTrackerPlugin plugin;
     private ActionHistory actionHistory;
@@ -44,14 +55,38 @@ public class TaskItemContent extends JPanel implements Refreshable
         iconService = plugin.getTaskIconService();
 
         titleLabel.setPreferredSize(new Dimension(0, 24));
-        add(titleLabel, BorderLayout.CENTER);
+        titleLabel.setBorder(null);
+        titleLabel.setOpaque(false);
+        titleEdit.setBorder(null);
+        titleEdit.setOpaque(false);
+        titleEdit.setDragEnabled(true);
 
-        JPanel iconWrapper = new JPanel(new BorderLayout());
+        titleStack.setOpaque(false);
+        titleStack.add(titleLabel, "label");
+        titleStack.add(titleEdit, "edit");
+        add(titleStack, BorderLayout.CENTER);
+
+        iconWrapper = new JPanel(new BorderLayout());
         iconWrapper.setBorder(new EmptyBorder(4, 0, 0, 4));
         iconWrapper.add(iconLabel, BorderLayout.NORTH);
         add(iconWrapper, BorderLayout.WEST);
 
         plugin.getUiStatusManager().addRefresher(task, this::refresh);
+
+        this.addComponentListener(new ComponentAdapter() {
+            @Override public void componentResized(ComponentEvent e) { updateTitleLabel(); }
+        });
+
+        titleEditable = (task instanceof ManualTask);
+        if (titleEditable) {
+            titleLabel.addMouseListener(new MouseAdapter() {
+                @Override public void mouseClicked(MouseEvent e) { enterEdit(); }
+            });
+            titleEdit.addActionListener(e -> exitEdit(true));
+            titleEdit.addFocusListener(new java.awt.event.FocusAdapter() {
+                @Override public void focusLost(java.awt.event.FocusEvent e) { exitEdit(true); }
+            });
+        }
 
         // Right-click to toggle completion with ActionHistory
         MouseAdapter contextMenuListener = new MouseAdapter()
@@ -98,7 +133,9 @@ public class TaskItemContent extends JPanel implements Refreshable
 
         // Attach listener to multiple components to make right-click reliable across platforms
         this.addMouseListener(contextMenuListener);
+        titleStack.addMouseListener(contextMenuListener);
         titleLabel.addMouseListener(contextMenuListener);
+        titleEdit.addMouseListener(contextMenuListener);
         iconLabel.addMouseListener(contextMenuListener);
     }
 
@@ -110,8 +147,8 @@ public class TaskItemContent extends JPanel implements Refreshable
     @Override
     public void refresh()
     {
-        titleLabel.setText(task.toString());
         titleLabel.setForeground(STATUS_TO_COLOR.get(task.getStatus()));
+        updateTitleLabel();
 
         int indent = 16 * task.getIndentLevel();
         iconLabel.setIcon(iconService.get(task));
@@ -127,5 +164,117 @@ public class TaskItemContent extends JPanel implements Refreshable
         for (Component component : getComponents()) {
             component.setBackground(bg);
         }
+    }
+
+    private void updateTitleLabel()
+    {
+        String full = task.toString();
+        titleLabel.setToolTipText((full == null || full.isEmpty()) ? null : full);
+        if (getWidth() <= 0) { titleLabel.setText(full); return; }
+
+        int insets = 0;
+        if (getBorder() != null) {
+            Insets ins = getBorder().getBorderInsets(this);
+            insets = (ins.left + ins.right);
+        }
+        int iconW = iconWrapper != null ? iconWrapper.getPreferredSize().width : 0;
+        int gap = 8;
+        int avail = Math.max(16, getWidth() - insets - iconW - gap);
+
+        FontMetrics fm = titleLabel.getFontMetrics(titleLabel.getFont());
+        if (full == null) full = "";
+        if (fm.stringWidth(full) <= avail) { titleLabel.setText(full); return; }
+
+        String ellipsis = "…";
+        int lo = 0, hi = full.length();
+        int cut = hi;
+        while (lo <= hi) {
+            int mid = (lo + hi) >>> 1;
+            String candidate = full.substring(0, Math.max(0, mid)) + ellipsis;
+            if (fm.stringWidth(candidate) <= avail) { cut = mid; lo = mid + 1; }
+            else { hi = mid - 1; }
+        }
+        titleLabel.setText(full.substring(0, Math.max(0, cut)) + ellipsis);
+    }
+
+    private void enterEdit()
+    {
+        if (!titleEditable) return;
+        titleEdit.setText(task.toString());
+        ((CardLayout) titleStack.getLayout()).show(titleStack, "edit");
+        titleEdit.requestFocusInWindow();
+        titleEdit.selectAll();
+    }
+
+    private void exitEdit(boolean save)
+    {
+        if (!titleEditable) { ((CardLayout) titleStack.getLayout()).show(titleStack, "label"); return; }
+        if (save) {
+            String newText = titleEdit.getText();
+            if (newText != null && task instanceof ManualTask) {
+                ((ManualTask) task).setDescription(newText);
+            }
+        }
+        ((CardLayout) titleStack.getLayout()).show(titleStack, "label");
+        updateTitleLabel();
+        plugin.getUiStatusManager().refresh(goal);
+    }
+
+    public Task getTask()
+    {
+        return task;
+    }
+
+    /**
+     * Try to invoke the same context menu action as right-click -> "Add prerequisites".
+     * @return true if the action was found and invoked, false otherwise
+     */
+    public boolean addPrereqsFromContext()
+    {
+        JComponent listItem = (JComponent) SwingUtilities.getAncestorOfClass(ListItemPanel.class, this);
+        if (listItem == null || listItem.getComponentPopupMenu() == null)
+        {
+            return false;
+        }
+
+        JPopupMenu menu = listItem.getComponentPopupMenu();
+        // Accept several label variants (case-insensitive)
+        String[] targets = new String[] {
+                "add prerequisites", "add pre-reqs", "add prereqs", "prerequisites"
+        };
+
+        return clickMenuItemByLabels(menu.getSubElements(), targets);
+    }
+
+    // Recursively search menu/submenus for a matching label and click it.
+    private static boolean clickMenuItemByLabels(MenuElement[] items, String[] needles)
+    {
+        for (MenuElement me : items)
+        {
+            if (me instanceof JMenuItem)
+            {
+                JMenuItem it = (JMenuItem) me;
+                String txt = it.getText();
+                if (txt != null)
+                {
+                    String lower = txt.toLowerCase(Locale.ROOT).trim();
+                    for (String needle : needles)
+                    {
+                        if (lower.contains(needle))
+                        {
+                            it.doClick();
+                            return true;
+                        }
+                    }
+                }
+            }
+            // Recurse into submenus and containers
+            MenuElement[] children = me.getSubElements();
+            if (children != null && children.length > 0 && clickMenuItemByLabels(children, needles))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

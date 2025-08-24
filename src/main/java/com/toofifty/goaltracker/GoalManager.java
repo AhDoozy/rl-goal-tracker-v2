@@ -37,6 +37,19 @@ public class GoalManager
         return goal;
     }
 
+    /**
+     * Append a batch of goals and persist + notify listeners.
+     */
+    public void addGoals(List<Goal> newGoals)
+    {
+        if (newGoals == null || newGoals.isEmpty())
+        {
+            return;
+        }
+        goals.addAll(newGoals);
+        save();
+    }
+
     @SuppressWarnings("unchecked")
     public <T extends Task> List<T> getTasksByTypeAndAnyStatus(TaskType type, Status... statuses)
     {
