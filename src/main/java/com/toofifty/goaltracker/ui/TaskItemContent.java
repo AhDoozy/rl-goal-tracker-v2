@@ -7,6 +7,7 @@ import com.toofifty.goaltracker.services.TaskIconService;
 import com.toofifty.goaltracker.models.task.QuestTask;
 import com.toofifty.goaltracker.utils.QuestRequirements;
 import java.util.List;
+import java.util.Locale;
 
 import com.toofifty.goaltracker.ui.components.ListPanel;
 import com.toofifty.goaltracker.ui.components.ListItemPanel;
@@ -217,5 +218,63 @@ public class TaskItemContent extends JPanel implements Refreshable
         ((CardLayout) titleStack.getLayout()).show(titleStack, "label");
         updateTitleLabel();
         plugin.getUiStatusManager().refresh(goal);
+    }
+
+    public Task getTask()
+    {
+        return task;
+    }
+
+    /**
+     * Try to invoke the same context menu action as right-click -> "Add prerequisites".
+     * @return true if the action was found and invoked, false otherwise
+     */
+    public boolean addPrereqsFromContext()
+    {
+        JComponent listItem = (JComponent) SwingUtilities.getAncestorOfClass(ListItemPanel.class, this);
+        if (listItem == null || listItem.getComponentPopupMenu() == null)
+        {
+            return false;
+        }
+
+        JPopupMenu menu = listItem.getComponentPopupMenu();
+        // Accept several label variants (case-insensitive)
+        String[] targets = new String[] {
+                "add prerequisites", "add pre-reqs", "add prereqs", "prerequisites"
+        };
+
+        return clickMenuItemByLabels(menu.getSubElements(), targets);
+    }
+
+    // Recursively search menu/submenus for a matching label and click it.
+    private static boolean clickMenuItemByLabels(MenuElement[] items, String[] needles)
+    {
+        for (MenuElement me : items)
+        {
+            if (me instanceof JMenuItem)
+            {
+                JMenuItem it = (JMenuItem) me;
+                String txt = it.getText();
+                if (txt != null)
+                {
+                    String lower = txt.toLowerCase(Locale.ROOT).trim();
+                    for (String needle : needles)
+                    {
+                        if (lower.contains(needle))
+                        {
+                            it.doClick();
+                            return true;
+                        }
+                    }
+                }
+            }
+            // Recurse into submenus and containers
+            MenuElement[] children = me.getSubElements();
+            if (children != null && children.length > 0 && clickMenuItemByLabels(children, needles))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

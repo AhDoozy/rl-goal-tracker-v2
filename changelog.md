@@ -32,6 +32,15 @@
 - Automatic prerequisite expansion for presets leverages the same logic as the quest right-click **Add prereqs** option.
 - Ellipsized titles: Goal cards and Task rows now ellipsize long titles with `…` and show full text on hover via tooltip.
 - Click-to-edit: Goal titles and ManualTask descriptions can now be edited by clicking their label; label swaps to an inline text field and saves on Enter or blur.
+- Added per-lane Ladlor presets (Melee, Ranged, Magic, Utility, Void Set, God Capes, Crystal & Bowfa, Jewelry & Boots, Slayer & Undead, Imbued Rings, God Wars Armor, Elite Void, Prayer Scrolls, Raids Uniques, Milestones & Capes), alongside the full combined Ladlor Ironman preset.
+- Added Early, Mid, and Late Ironman presets as consolidated single-goal lists rather than split by category.
+- Added a new **Add pre-reqs** button to the Goal view header, next to Undo/Redo. This button triggers the same logic as the quest right-click **Add prerequisites** option, but applies to all quest tasks in the goal at once.
+- Converted all Early, Mid, and Late Ironman preset skill milestones from ManualTask to SkillLevelTask for accurate level tracking.
+- Expanded Early Ironman preset with Birdhouse run unlocks (Dig Site, Bone Voyage, Hunter 5, Crafting 8, Construction 16) and Seaweed run unlock (Farming 23).
+- Reworked Early, Mid, and Late Ironman presets with more appropriate content and progression pacing (e.g., Early emphasizes graceful set and mobility, Mid includes Iban’s staff, Ava’s, Barrows gloves, Late includes Blowpipe, Bowfa, Bandos, endgame quests).
+- Commented out Ladlor presets from default loading in GoalPresetRepository to simplify active preset list.
+- Fixed incorrect ItemID constants for Salve amulet (ei) in Slayer & Undead presets (SALVE_AMULET_EI).
+- Removed stray selection marker and corrected field declaration in GoalPresetRepository.
 
 ### Changed
 - Pre-req button made more compact (~25% smaller).

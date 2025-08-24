@@ -183,6 +183,7 @@ public class GoalTrackerPanel extends PluginPanel implements Refreshable
         this.goalPanel = null;
     }
 
+
     @Override
     public void refresh()
     {
