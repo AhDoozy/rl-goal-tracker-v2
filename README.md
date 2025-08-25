@@ -1,4 +1,4 @@
-<file name=0 path=README.md><file name=0 path=README.md># 🏆 Goal Tracker v2
+# 🏆 Goal Tracker
 
 > A complete reimagining of the Goal Tracker plugin — rebuilt with a more modern UI, powerful new features, and improved stability to help you plan, track, and achieve your Old School RuneScape goals with ease.
 
@@ -77,19 +77,19 @@
 
 ### Home panel with goal cards  
 *Redesigned goal cards with progress bars, hover effects, and instant refresh — plus the new “Add from Preset” button and Export/Import features for easy sharing and backups.*  
-![Goal Tracker Home Panel](img/goal_panel_v2.jpg)  
+![Goal Tracker Home Panel](img/home_panel_new.jpg)
 
 ### Home panel right‑click menu  
 *New options: move goal up/down, mark all complete/incomplete, and pin/unpin goals.*  
-![Goal Tracker Right Click Menu](img/right_click_goals_v2.jpg)  
+![Goal Tracker Right Click Menu](img/right_click_goals.jpg)  
 
 ### Inside a goal with task list  
 *Task rows now show icons, ellipsized text, and inline editing — with redesigned item search & quest features, plus an Add Pre-reqs button for quests (using our built-in list), along with Undo/Redo buttons.*  
-![Goal Tracker Task List](img/goal_task_panel_v2.jpg)  
+![Goal Tracker Task List](img/goal_task_panel.jpg)  
 
 ### Add from Preset  
 *Quickly insert curated presets like Ironman Progression, Void set, or Barrows Gear.*
-![Goal Tracker Add From Preset](img/add_from_preset_v2.jpg)  
+![Goal Tracker Add From Preset](img/add_from_preset.jpg)  
 
 </details>
 
