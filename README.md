@@ -88,20 +88,10 @@
 ![Goal Tracker Task List](img/goal_task_panel.jpg)  
 
 ### Add from Preset  
-*Quickly insert curated presets like Ironman Progression, Void set, or Barrows Gear.*
-![Goal Tracker Add From Preset](img/add_from_preset.jpg)  
+*Quickly insert curated presets like Ironman Progression, Void set, or Barrows Gear.*  
+![Goal Tracker Add From Preset](img/add_from_preset.jpg)
 
 </details>
-
-<details>
-<summary><h2 style="margin:0;display:inline;">🙏 Acknowledgements</h2></summary>
-
-- Original plugin created by **dillydill123**.  
-- Renovated and maintained by **AhDoozy**.
-
-</details>
-## 📄 License
-Licensed under the [BSD 2-Clause License](LICENSE).  
 
 -----
 <details>
